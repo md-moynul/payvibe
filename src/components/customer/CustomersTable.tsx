@@ -2,7 +2,16 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, Button, Chip, Card } from "@heroui/react";
+import {
+  Avatar,
+  AvatarFallback,
+  Button,
+  Chip,
+  Card,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@heroui/react";
 import {
   Mail,
   Phone,
@@ -163,19 +172,17 @@ export default function CustomersTable({
                           <span>Approve KYC</span>
                         </Button>
                       )}
-
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onPress={() => handleViewDetails(customer)}
+                        className="gap-1.5 font-medium"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>View Details</span>
+                      </Button>
                       {hasBankAccount ? (
                         <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onPress={() => handleViewDetails(customer)}
-                            className="gap-1.5 font-medium"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                            <span>View Details</span>
-                          </Button>
-
                           <Button
                             size="sm"
                             variant="outline"
@@ -198,15 +205,28 @@ export default function CustomersTable({
                           </Button>
                         </>
                       ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onPress={() => onQuickCreateAccount?.(customer)}
-                          className="gap-1.5 font-medium"
-                        >
-                          <PlusCircle className="h-3.5 w-3.5" />
-                          <span>Open Account</span>
-                        </Button>
+                        <Tooltip delay={150}>
+                          <TooltipTrigger className="inline-flex">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              isDisabled={!customer.kycVerified}
+                              onPress={() => {
+                                if (!customer.kycVerified) return;
+                                onQuickCreateAccount?.(customer);
+                              }}
+                              className="gap-1.5 font-medium"
+                            >
+                              <PlusCircle className="h-3.5 w-3.5" />
+                              <span>Open Account</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs px-2.5 py-1">
+                            {customer.kycVerified
+                              ? "Open a new bank account"
+                              : "KYC approval required before opening an account"}
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                   </td>
