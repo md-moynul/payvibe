@@ -1,9 +1,21 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import client from "./db";
+import { connectToDatabase } from "./db";
 import { UserRole } from "@/types/auth.type";
 
+function normalizeRole(rawRole: unknown): UserRole {
+  const normalized =
+    typeof rawRole === "string"
+      ? rawRole.trim().toLowerCase().replace(/\s+/g, "-")
+      : "";
+
+  if (normalized === "admin") return "admin";
+  if (normalized === "bank-staff" || normalized === "staff") {
+    return "bank-staff" as UserRole;
+  }
+  return "customer" as UserRole;
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -24,24 +36,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const db = client.db(process.env.MONGODB_DB_NAME || "pay-vibe_db");
+        const db = await connectToDatabase();
         const user = await db.collection("users").findOne({ email });
 
-        if (!user || !user.passwordHash || user.isActive === false) {
+        if (!user || user.isActive === false) {
           return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+        const normalizedStatus =
+          typeof user.status === "string"
+            ? user.status.trim().toLowerCase()
+            : "";
+        if (
+          normalizedStatus === "suspended" ||
+          normalizedStatus === "inactive" ||
+          normalizedStatus === "blocked"
+        ) {
+          return null;
+        }
+
+        const passwordHash =
+          typeof user.passwordHash === "string" ? user.passwordHash : "";
+
+        if (!passwordHash) {
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, passwordHash);
         if (!isPasswordValid) {
           return null;
         }
 
-        const role: UserRole =
-          user.role === "admin" ||
-          user.role === "bank Staff" ||
-          user.role === "customer"
-            ? user.role
-            : "Customer";
+        const role = normalizeRole(user.role);
 
         return {
           id: user._id.toString(),
@@ -63,7 +89,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.id ?? "");
-        session.user.role = (token.role as UserRole) ?? "Customer";
+        session.user.role = (token.role as UserRole) ?? ("customer" as UserRole);
       }
       return session;
     },

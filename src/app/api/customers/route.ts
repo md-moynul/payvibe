@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
     const hashedPin = await bcrypt.hash(pin, 10);
     const createdAt = new Date().toISOString();
 
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
       name,
       email,
       phone,
-      password: hashedPassword,
+      passwordHash,
       pin: hashedPin,
       role: "customer",
       status: "Active",

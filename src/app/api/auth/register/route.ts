@@ -39,8 +39,9 @@ export async function POST(req: Request) {
       email,
       passwordHash,
       role,
+      status: "Active",
       isActive: true,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     });
 
     return NextResponse.json(
