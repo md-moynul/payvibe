@@ -9,6 +9,11 @@ import {
   Card,
   CardContent,
   Chip,
+  Spinner,
+  Alert,
+  AlertIndicator,
+  AlertContent,
+  AlertTitle,
 } from "@heroui/react";
 import {
   ArrowLeft,
@@ -25,19 +30,12 @@ import {
 } from "lucide-react";
 import type { IAccount } from "@/types/account.type";
 import { useGetAccountByIdQuery } from "@/redux/features/account";
+import CreateAccountModal from "@/components/account/CreateAccountModal";
+import FreezeAccountModal from "@/components/account/FreezeAccountModal";
+import { IDummyTransaction } from "@/types/transaction.type";
 
 // TODO: Replace DUMMY_TRANSACTIONS with live transaction history query by account ID
 // TODO: Enforce Admin / Bank Staff session & role check before rendering sensitive account details
-
-interface IDummyTransaction {
-  id: string;
-  type: "Deposit" | "Withdrawal" | "Transfer";
-  amount: number;
-  status: "Completed" | "Pending" | "Failed";
-  date: string;
-  reference: string;
-  note: string;
-}
 
 const DUMMY_TRANSACTIONS: IDummyTransaction[] = [
   {
@@ -74,30 +72,43 @@ export default function AdminAccountDetailsPage() {
   const router = useRouter();
   const routeId = params?.id ?? "";
 
-  const { data, isLoading, isError, refetch } = useGetAccountByIdQuery(routeId, {
-    skip: !routeId,
-  });
+  const { data, isLoading, isError, refetch } = useGetAccountByIdQuery(
+    routeId,
+    {
+      skip: !routeId,
+    },
+  );
 
   const account: IAccount | undefined = data?.data;
   const [transactions] = useState<IDummyTransaction[]>(DUMMY_TRANSACTIONS);
 
-  // TODO: Connect Edit button to CreateAccountModal in edit mode or open inline edit drawer/modal
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isFreezeOpen, setIsFreezeOpen] = useState(false);
+
   const handleEditClick = () => {
     if (!account?.id) return;
-    console.log("TODO: Open Edit modal for account:", account.id);
+    setIsEditOpen(true);
   };
 
-  // TODO: Connect Freeze button to FreezeAccountModal / PATCH /api/accounts/[id]
   const handleFreezeClick = () => {
     if (!account?.id) return;
-    console.log("TODO: Open Freeze modal for account:", account.id);
+    setIsFreezeOpen(true);
+  };
+
+  const handleModalSuccess = async () => {
+    setIsEditOpen(false);
+    setIsFreezeOpen(false);
+    await refetch();
   };
 
   if (isLoading) {
     return (
       <div className="mx-auto max-w-6xl p-4 sm:p-6">
-        <Card className="border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          Loading account details...
+        <Card className="border border-border bg-card p-10 text-center flex flex-col items-center justify-center gap-3">
+          <Spinner size="md" color="accent" />
+          <span className="text-sm text-muted-foreground">
+            Loading account details...
+          </span>
         </Card>
       </div>
     );
@@ -106,9 +117,14 @@ export default function AdminAccountDetailsPage() {
   if (isError || !account) {
     return (
       <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
-        <Card className="border border-rose-500/30 bg-rose-500/10 p-6 text-center text-sm text-rose-600 dark:text-rose-400">
-          Failed to load account details or account not found.
-        </Card>
+        <Alert status="danger">
+          <AlertIndicator />
+          <AlertContent>
+            <AlertTitle>
+              Failed to load account details or account not found.
+            </AlertTitle>
+          </AlertContent>
+        </Alert>
         <div className="flex justify-center gap-2">
           <Button
             size="sm"
@@ -172,7 +188,6 @@ export default function AdminAccountDetailsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* TODO: Wire Edit button to update account limits/type */}
           <Button
             size="sm"
             variant="outline"
@@ -183,7 +198,6 @@ export default function AdminAccountDetailsPage() {
             <span>Edit</span>
           </Button>
 
-          {/* TODO: Wire Freeze / Unfreeze button to account status mutation */}
           <Button
             size="sm"
             variant="ghost"
@@ -206,14 +220,14 @@ export default function AdminAccountDetailsPage() {
                 Current Balance
               </p>
               <p className="mt-2 text-2xl font-bold text-foreground">
-                ৳{account.balance.toLocaleString("en-BD")}
+                ৳{(account.balance ?? 0).toLocaleString("en-BD")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Min balance required: ৳
-                {account.minBalance.toLocaleString("en-BD")}
+                {(account.minBalance ?? 0).toLocaleString("en-BD")}
               </p>
             </div>
-            <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+            <div className="rounded-xl bg-blue-500/10 p-2.5 text-blue-600 dark:text-blue-400">
               <Wallet className="h-5 w-5" />
             </div>
           </CardContent>
@@ -245,11 +259,11 @@ export default function AdminAccountDetailsPage() {
                 Transaction Limits
               </p>
               <p className="mt-2 text-lg font-bold text-foreground">
-                ৳{account.dailyLimit.toLocaleString("en-BD")} / day
+                ৳{(account.dailyLimit ?? 0).toLocaleString("en-BD")} / day
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Max single: ৳
-                {account.maxSingleTransaction.toLocaleString("en-BD")}
+                {(account.maxSingleTransaction ?? 0).toLocaleString("en-BD")}
               </p>
             </div>
             <div className="rounded-xl bg-sky-500/10 p-2.5 text-sky-600 dark:text-sky-400">
@@ -361,7 +375,8 @@ export default function AdminAccountDetailsPage() {
                       </Chip>
                     </td>
                     <td className="px-5 py-3.5 text-right font-semibold text-foreground">
-                      {isCredit ? "+" : "-"}৳{txn.amount.toLocaleString("en-BD")}
+                      {isCredit ? "+" : "-"}৳
+                      {txn.amount.toLocaleString("en-BD")}
                     </td>
                   </tr>
                 );
@@ -370,6 +385,23 @@ export default function AdminAccountDetailsPage() {
           </table>
         </div>
       </Card>
+
+      {/* TODO: Ensure FreezeAccountModal & CreateAccountModal props stay aligned across admin pages */}
+      <CreateAccountModal
+        isOpen={isEditOpen}
+        mode="edit"
+        editAccount={account}
+        onClose={() => setIsEditOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
+
+      <FreezeAccountModal
+        isOpen={isFreezeOpen}
+        customerName={account.ownerName}
+        accountId={account.id}
+        onClose={() => setIsFreezeOpen(false)}
+        onAccountFrozen={handleModalSuccess}
+      />
     </div>
   );
 }
