@@ -22,15 +22,11 @@ function generateAccountNumber(): string {
 
 function isStaffOrAdmin(role?: string | null): boolean {
   const normalized = role?.toLowerCase();
-  return (
-    normalized === "admin" ||
-    normalized === "bank-staff" ||
-    normalized === "bank staff"
-  );
+  return normalized === "admin" || normalized === "bank-staff";
 }
 
 export async function GET() {
- try {
+  try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
@@ -103,7 +99,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const roleCheck = await checkRole();
-if (!roleCheck.ok) return roleCheck.response;
+    if (!roleCheck.ok) return roleCheck.response;
 
     const body = await req.json();
     const {
