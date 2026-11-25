@@ -79,3 +79,68 @@ export interface IDecideLoanResponse {
     transactionId?: string;
   };
 }
+export interface IRepayLoanPayload {
+  id: string;
+  amount?: number;
+}
+
+export interface IRepayLoanResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    status: TLoanStatus;
+    paidAmount: number;
+    remainingBalance: number;
+    transactionId: string;
+  };
+}
+export type TRepaymentTimeliness =
+  | "No Previous Loan"
+  | "Timely Paid"
+  | "Late / Missed Installment"
+  | "Partially Paid / Active";
+
+export interface IApplicantInfoPayload {
+  currentLoan: {
+    id: string;
+    loanType: string;
+    requestedAmount: number;
+    durationMonths: number;
+    interestRate: number;
+    totalPayable: number;
+    monthlyInstallment: number;
+    status: string;
+    description: string;
+    staffNotes: string;
+    createdAt: string;
+  };
+  applicant: {
+    name: string;
+    email: string;
+    phone: string;
+    status: string;
+    kycVerified: boolean;
+    monthlyIncome: number;
+    employmentStatus: string;
+  };
+  account: {
+    accountNumber: string;
+    accountType: string;
+    balance: number;
+    currency: string;
+    status: string;
+  } | null;
+  lastLoan: {
+    id: string;
+    loanType: string;
+    requestedAmount: number;
+    totalPayable: number;
+    remainingBalance: number;
+    durationMonths: number;
+    status: string;
+    paidAmount: number;
+    repaymentTimeliness: TRepaymentTimeliness;
+    createdAt: string;
+  } | null;
+}

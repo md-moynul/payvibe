@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   XCircle,
   UserSearch,
+  CreditCard,
 } from "lucide-react";
 import type { ILoan, TLoanStatus } from "@/types/loan.type";
 
@@ -16,11 +17,13 @@ interface ILoansTableProps {
   showCustomerInfo?: boolean;
   canAssistLoan?: boolean;
   canDecideLoan?: boolean;
+  canRepayLoan?: boolean;
   isProcessing?: boolean;
   onViewUserInfo?: (loan: ILoan) => void;
   onReviewLoan?: (loan: ILoan) => void;
   onApproveLoan?: (loan: ILoan) => void;
   onRejectLoan?: (loan: ILoan) => void;
+  onRepayLoan?: (loan: ILoan) => void;
 }
 
 function getLoanStatusColor(status: TLoanStatus) {
@@ -43,14 +46,16 @@ export default function LoansTable({
   showCustomerInfo = false,
   canAssistLoan = false,
   canDecideLoan = false,
+  canRepayLoan = false,
   isProcessing = false,
   onViewUserInfo,
   onReviewLoan,
   onApproveLoan,
   onRejectLoan,
+  onRepayLoan,
 }: ILoansTableProps) {
   const hasAnyAction =
-    Boolean(onViewUserInfo) || canAssistLoan || canDecideLoan;
+    Boolean(onViewUserInfo) || canAssistLoan || canDecideLoan || canRepayLoan;
 
   if (loans.length === 0) {
     return (
@@ -94,6 +99,11 @@ export default function LoansTable({
                 loan.status === "Active" ||
                 loan.status === "Rejected" ||
                 loan.status === "Completed";
+
+              const canPayCurrentLoan =
+                canRepayLoan &&
+                (loan.status === "Active" || loan.status === "Approved") &&
+                Number(loan.remainingBalance ?? 0) > 0;
 
               return (
                 <tr key={loan.id} className="transition hover:bg-muted/30">
@@ -197,6 +207,19 @@ export default function LoansTable({
                               <span>Reject</span>
                             </Button>
                           </>
+                        )}
+
+                        {canRepayLoan && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={isProcessing || !canPayCurrentLoan}
+                            onPress={() => onRepayLoan?.(loan)}
+                            className="gap-1.5 font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                          >
+                            <CreditCard className="h-3.5 w-3.5" />
+                            <span>Pay Installment</span>
+                          </Button>
                         )}
                       </div>
                     </td>

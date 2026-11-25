@@ -5,6 +5,8 @@ import type {
   IDecideLoanPayload,
   IDecideLoanResponse,
   ILoansResponse,
+  IRepayLoanPayload,
+  IRepayLoanResponse,
   IReviewLoanPayload,
   IReviewLoanResponse,
 } from "@/types/loan.type";
@@ -39,6 +41,14 @@ export const loanApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["loans", "accounts", "transactions"],
     }),
+    repayLoan: builder.mutation<IRepayLoanResponse, IRepayLoanPayload>({
+      query: ({ id, amount }) => ({
+        url: `/loans/${encodeURIComponent(id)}/repay`,
+        method: "POST",
+        body: amount !== undefined ? { amount } : {},
+      }),
+      invalidatesTags: ["loans", "accounts", "transactions"],
+    }),
   }),
 });
 
@@ -47,4 +57,5 @@ export const {
   useApplyLoanMutation,
   useReviewLoanMutation,
   useDecideLoanMutation,
+  useRepayLoanMutation,
 } = loanApi;
