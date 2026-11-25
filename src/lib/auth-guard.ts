@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import type { UserRole } from "@/types/next-auth";
+import { UserRole } from "@/types/auth.type";
 
 export async function requireAuth(allowedRoles?: UserRole[]) {
   const session = await auth();
