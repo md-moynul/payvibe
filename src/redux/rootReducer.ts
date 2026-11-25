@@ -1,7 +1,12 @@
 import { combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./features/auth/auth.slice";
+import accountReducer from "./features/account/account.slice";
+import customerReducer from "./features/customer/customer.slice";
+import { baseApi } from "./baseApi";
 
 export const rootReducer = combineReducers({
-    // add your reducers here
-    auth: authReducer,
-})
+  [baseApi.reducerPath]: baseApi.reducer,
+  auth: authReducer,
+  account: accountReducer,
+  customer: customerReducer,
+});
