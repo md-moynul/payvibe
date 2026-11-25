@@ -6,6 +6,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { store } from "@/redux/store";
 import { useAppDispatch } from "@/redux/hook";
 import { setUser, clearAuth } from "@/redux/features/auth/auth.slice";
+import { ToastProvider } from "@heroui/react";
 
 function AuthSync() {
   const { data: session, status } = useSession();
@@ -33,6 +34,7 @@ export function ReduxProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <Provider store={store}>
+        <ToastProvider placement="top end" />
         <AuthSync />
         {children}
       </Provider>
