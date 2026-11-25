@@ -9,7 +9,7 @@ export const customerApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCustomers: builder.query<ICustomersResponse, void>({
       query: () => "/customers",
-      providesTags: ["Customers"],
+      providesTags: ["customers"],
     }),
     registerCustomer: builder.mutation<
       IRegisterCustomerResponse,
@@ -20,7 +20,7 @@ export const customerApi = baseApi.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["Customers"],
+      invalidatesTags: ["customers"],
     }),
   }),
 });

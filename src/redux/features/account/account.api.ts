@@ -30,15 +30,15 @@ export const accountApi = baseApi.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["Accounts"],
+      invalidatesTags: ["accounts"],
     }),
     getAccounts: builder.query<IAccountsListResponse, void>({
       query: () => "/accounts",
-      providesTags: ["Accounts"],
+      providesTags: ["accounts"],
     }),
     getAccountById: builder.query<IAccountResponse, string>({
       query: (id) => `/accounts/${encodeURIComponent(id)}`,
-      providesTags: ["Accounts"],
+      providesTags: ["accounts"],
     }),
     updateAccountStatus: builder.mutation<
       IAccountResponse,
@@ -49,7 +49,7 @@ export const accountApi = baseApi.injectEndpoints({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: ["Accounts"],
+      invalidatesTags: ["accounts"],
     }),
     updateAccountLimits: builder.mutation<
       IAccountResponse,
@@ -60,7 +60,7 @@ export const accountApi = baseApi.injectEndpoints({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: ["Accounts"],
+      invalidatesTags: ["accounts"],
     }),
   }),
 });
