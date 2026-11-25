@@ -84,7 +84,7 @@ export async function GET() {
         email: String(u.email ?? ""),
         phone: String(u.phone ?? ""),
         status: (u.status as "Active" | "Inactive" | "Flagged") ?? "Active",
-        kycVerified: Boolean(u.kycVerified ?? true),
+        kycVerified: Boolean(u.kycVerified ?? false),
         accountsCount: hasAccount ? 1 : 0,
         totalBalance: matchedAccount
           ? matchedAccount.balance
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
       pin: hashedPin,
       role: "customer",
       status: "Active",
-      kycVerified: true,
+      kycVerified: false,
       accountsCount: 0,
       totalBalance: 0,
       createdAt,
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
       email: newCustomerDoc.email,
       phone: newCustomerDoc.phone,
       status: "Active" as const,
-      kycVerified: true,
+      kycVerified: false,
       accountsCount: 0,
       totalBalance: 0,
       joinedAt: createdAt.slice(0, 10),

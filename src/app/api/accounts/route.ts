@@ -188,6 +188,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!customer.kycVerified) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Customer KYC is not verified yet. Admin approval is required before opening a bank account.",
+        },
+        { status: 403 },
+      );
+    }
+
     const resolvedCustomerId = customer._id.toString();
     const resolvedOwnerEmail = String(
       customer.email ?? ownerEmail ?? "",
