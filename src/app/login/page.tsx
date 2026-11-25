@@ -19,6 +19,7 @@ import {
   AlertTitle,
   Spinner,
 } from "@heroui/react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { setAuthError } from "@/redux/features/auth/auth.slice";
 import {
@@ -38,13 +39,16 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useAppDispatch();
   const error = useAppSelector(selectAuthError);
   const loading = useAppSelector(selectAuthLoading);
+
   useEffect(() => {
     dispatch(setAuthError(null));
     dispatch(setAuthLoading(false));
   }, [dispatch]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     dispatch(setAuthLoading(true));
@@ -113,19 +117,35 @@ export default function LoginPage() {
 
             <TextField
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               isRequired
               value={password}
               onChange={setPassword}
               className="flex flex-col gap-1.5"
             >
               <Label className="text-sm font-medium">Password</Label>
-              <Input
-                id="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative flex items-center">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 text-muted-foreground hover:text-foreground focus:outline-none transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </TextField>
 
             <Button

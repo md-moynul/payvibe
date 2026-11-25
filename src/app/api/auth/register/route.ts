@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import client from "@/lib/db";
+import { connectToDatabase } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const db = client.db(process.env.MONGODB_DB_NAME || "payvibe_db");
+    const db = await connectToDatabase();
     const usersCollection = db.collection("users");
 
     const existingUser = await usersCollection.findOne({ email });
@@ -32,12 +32,13 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const role = "customer";
 
     const result = await usersCollection.insertOne({
       name,
       email,
       passwordHash,
-      role: "Customer",
+      role,
       isActive: true,
       createdAt: new Date(),
     });
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
           id: result.insertedId.toString(),
           name,
           email,
-          role: "Customer",
+          role,
         },
       },
       { status: 201 }
