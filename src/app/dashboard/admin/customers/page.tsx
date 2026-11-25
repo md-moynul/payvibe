@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { toast } from "@heroui/react";
 import CustomerHeader from "@/components/customer/CustomerHeader";
 import CustomerStatsGrid from "@/components/customer/CustomerStatsGrid";
 import CustomersTable, {
@@ -9,7 +10,13 @@ import CustomersTable, {
 import RegisterCustomerModal from "@/components/customer/RegisterCustomerModal";
 import CreateAccountModal from "@/components/account/CreateAccountModal";
 import FreezeAccountModal from "@/components/account/FreezeAccountModal";
-import { useGetCustomersQuery } from "@/redux/features/customer";
+import {
+  useGetCustomersQuery,
+  useUpdateCustomerKycMutation,
+} from "@/redux/features/customer";
+import { useAppSelector } from "@/redux/hook";
+import { selectUserRole } from "@/redux/features/auth";
+import { getRoleAccess } from "@/lib/role.helper";
 import type { IAccount } from "@/types/account.type";
 import {
   Card,
@@ -38,7 +45,13 @@ export default function AdminCustomersPage() {
     useState<ICustomerWithAccount | null>(null);
   const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false);
 
+  const rawRole = useAppSelector(selectUserRole);
+  const { canApproveKyc } = getRoleAccess(rawRole);
+
   const { data, isLoading, isError, refetch } = useGetCustomersQuery();
+  const [updateCustomerKyc, { isLoading: isUpdatingKyc }] =
+    useUpdateCustomerKycMutation();
+
   const customers = useMemo<ICustomerWithAccount[]>(
     () => (data?.data ?? []) as ICustomerWithAccount[],
     [data],
@@ -70,6 +83,24 @@ export default function AdminCustomersPage() {
   const handleFreezeAccount = (customer: ICustomerWithAccount) => {
     setFreezingCustomer(customer);
     setIsFreezeModalOpen(true);
+  };
+
+  const handleApproveKyc = async (customer: ICustomerWithAccount) => {
+    if (!canApproveKyc || isUpdatingKyc) return;
+
+    try {
+      const response = await updateCustomerKyc({
+        id: customer.id,
+        kycVerified: true,
+      }).unwrap();
+
+      toast.success(
+        response.message || `KYC approved for ${customer.name}`,
+      );
+    } catch (error) {
+      console.error("Failed to approve customer KYC:", error);
+      toast.danger("Failed to approve customer KYC");
+    }
   };
 
   const handleCloseAccountModal = () => {
@@ -114,7 +145,9 @@ export default function AdminCustomersPage() {
       {isLoading ? (
         <Card className="rounded-2xl border border-border bg-card p-10 text-center flex flex-col items-center justify-center gap-3">
           <Spinner size="md" color="accent" />
-          <span className="text-sm text-muted-foreground">Loading customers...</span>
+          <span className="text-sm text-muted-foreground">
+            Loading customers...
+          </span>
         </Card>
       ) : isError ? (
         <Alert status="danger">
@@ -129,9 +162,12 @@ export default function AdminCustomersPage() {
       ) : (
         <CustomersTable
           customers={filteredCustomers}
+          canApproveKyc={canApproveKyc}
+          isUpdatingKyc={isUpdatingKyc}
           onQuickCreateAccount={handleQuickCreateAccount}
           onEditAccount={handleEditAccount}
           onFreezeAccount={handleFreezeAccount}
+          onApproveKyc={handleApproveKyc}
         />
       )}
 

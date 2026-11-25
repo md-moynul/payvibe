@@ -10,12 +10,10 @@ import {
   Eye,
   Pencil,
   Snowflake,
+  ShieldCheck,
 } from "lucide-react";
 import type { IDummyCustomer } from "./CustomerStatsGrid";
 import type { TAccountStatus } from "@/types/account.type";
-
-// TODO: Add customer details view / status toggle / verify KYC actions for Admin & Bank Staff
-// TODO: Add pagination support when connected to real customer list API
 
 export interface ICustomerWithAccount extends IDummyCustomer {
   accountId?: string;
@@ -24,16 +22,22 @@ export interface ICustomerWithAccount extends IDummyCustomer {
 
 interface ICustomersTableProps {
   customers: ICustomerWithAccount[];
+  canApproveKyc?: boolean;
+  isUpdatingKyc?: boolean;
   onQuickCreateAccount?: (customer: ICustomerWithAccount) => void;
   onEditAccount?: (customer: ICustomerWithAccount) => void;
   onFreezeAccount?: (customer: ICustomerWithAccount) => void;
+  onApproveKyc?: (customer: ICustomerWithAccount) => void;
 }
 
 export default function CustomersTable({
   customers,
+  canApproveKyc = false,
+  isUpdatingKyc = false,
   onQuickCreateAccount,
   onEditAccount,
   onFreezeAccount,
+  onApproveKyc,
 }: ICustomersTableProps) {
   const router = useRouter();
 
@@ -146,53 +150,65 @@ export default function CustomersTable({
                   </td>
 
                   <td className="px-5 py-4 text-right">
-                    {/* TODO: Pass selected customer email/id into CreateAccountModal so account creation links to this customer */}
-                    {hasBankAccount ? (
-                      <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                    <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                      {canApproveKyc && !customer.kycVerified && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onPress={() => handleViewDetails(customer)}
+                          isDisabled={isUpdatingKyc}
+                          onPress={() => onApproveKyc?.(customer)}
+                          className="gap-1.5 font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          <span>Approve KYC</span>
+                        </Button>
+                      )}
+
+                      {hasBankAccount ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onPress={() => handleViewDetails(customer)}
+                            className="gap-1.5 font-medium"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            <span>View Details</span>
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onPress={() => onEditAccount?.(customer)}
+                            className="gap-1.5 font-medium"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            <span>Edit</span>
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={isFrozen}
+                            onPress={() => onFreezeAccount?.(customer)}
+                            className="gap-1.5 font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400"
+                          >
+                            <Snowflake className="h-3.5 w-3.5" />
+                            <span>{isFrozen ? "Frozen" : "Freeze"}</span>
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onPress={() => onQuickCreateAccount?.(customer)}
                           className="gap-1.5 font-medium"
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          <span>View Details</span>
+                          <PlusCircle className="h-3.5 w-3.5" />
+                          <span>Open Account</span>
                         </Button>
-
-                        {/* TODO: Wire Edit action to EditAccountModal / account update mutation */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onPress={() => onEditAccount?.(customer)}
-                          className="gap-1.5 font-medium"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          <span>Edit</span>
-                        </Button>
-
-                        {/* TODO: Wire Freeze action to account status update API (PATCH /api/accounts/[id]) */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          isDisabled={isFrozen}
-                          onPress={() => onFreezeAccount?.(customer)}
-                          className="gap-1.5 font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400"
-                        >
-                          <Snowflake className="h-3.5 w-3.5" />
-                          <span>{isFrozen ? "Frozen" : "Freeze"}</span>
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onPress={() => onQuickCreateAccount?.(customer)}
-                        className="gap-1.5 font-medium"
-                      >
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span>Open Account</span>
-                      </Button>
-                    )}
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
