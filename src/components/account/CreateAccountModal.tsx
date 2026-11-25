@@ -8,11 +8,14 @@ import {
   AlertIndicator,
   AlertContent,
   AlertTitle,
+  toast,
 } from "@heroui/react";
 import { X, Landmark, Save } from "lucide-react";
 import type { IAccount, TAccountType } from "@/types/account.type";
-
-// TODO: Replace fetch calls with RTK Query useCreateAccountMutation and useUpdateAccountMutation
+import {
+  useCreateAccountMutation,
+  useUpdateAccountLimitsMutation,
+} from "@/redux/features/account";
 
 interface ICreateAccountModalProps {
   isOpen: boolean;
@@ -20,7 +23,7 @@ interface ICreateAccountModalProps {
   mode?: "create" | "edit";
   defaultEmail?: string;
   defaultCustomerId?: string;
-  editAccount?: IAccount | null;
+  editAccount?: (IAccount & { ownerEmail?: string }) | null;
   onSuccess?: () => void;
 }
 
@@ -29,7 +32,7 @@ interface IAccountFormInnerProps {
   mode: "create" | "edit";
   defaultEmail: string;
   defaultCustomerId: string;
-  editAccount: IAccount | null;
+  editAccount: (IAccount & { ownerEmail?: string }) | null;
   onSuccess?: () => void;
 }
 
@@ -43,7 +46,15 @@ function AccountFormInner({
 }: IAccountFormInnerProps) {
   const isEditMode = mode === "edit" && Boolean(editAccount);
 
-  const [ownerEmail, setOwnerEmail] = useState(defaultEmail);
+  const [createAccount, { isLoading: isCreating }] = useCreateAccountMutation();
+  const [updateAccountLimits, { isLoading: isUpdatingLimits }] =
+    useUpdateAccountLimitsMutation();
+
+  const submitting = isCreating || isUpdatingLimits;
+
+  const [ownerEmail, setOwnerEmail] = useState(
+    editAccount?.ownerEmail ?? defaultEmail,
+  );
   const [accountType, setAccountType] = useState<TAccountType>(
     editAccount?.accountType ?? "Savings Account",
   );
@@ -61,61 +72,53 @@ function AccountFormInner({
       ? String(editAccount.maxSingleTransaction)
       : "25000",
   );
-  const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    setSubmitting(true);
 
     try {
-      const endpoint = isEditMode
-        ? `/api/accounts/${editAccount?.id}`
-        : "/api/accounts";
-      const method = isEditMode ? "PATCH" : "POST";
-
-      const payload = isEditMode
-        ? {
-            accountType,
-            minBalance: Number(minBalance),
-            dailyLimit: Number(dailyLimit),
-            maxSingleTransaction: Number(maxSingleTransaction),
-          }
-        : {
-            ...(defaultCustomerId ? { customerId: defaultCustomerId } : {}),
-            ownerEmail: ownerEmail.trim().toLowerCase(),
-            accountType,
-            initialBalance: Number(initialBalance),
-            minBalance: Number(minBalance),
-            dailyLimit: Number(dailyLimit),
-            maxSingleTransaction: Number(maxSingleTransaction),
-          };
-
-      const res = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await res.json();
-      if (!res.ok || !result?.success) {
-        throw new Error(
-          result?.message ||
-            (isEditMode
-              ? "Failed to update bank account."
-              : "Failed to create bank account."),
-        );
+      if (isEditMode && editAccount) {
+        await updateAccountLimits({
+          id: editAccount.id,
+          minBalance: Number(minBalance),
+          dailyLimit: Number(dailyLimit),
+          maxSingleTransaction: Number(maxSingleTransaction),
+        }).unwrap();
+      } else {
+        await createAccount({
+          ...(defaultCustomerId ? { customerId: defaultCustomerId } : {}),
+          ownerEmail: ownerEmail.trim().toLowerCase(),
+          accountType,
+          initialBalance: Number(initialBalance),
+          minBalance: Number(minBalance),
+          dailyLimit: Number(dailyLimit),
+          maxSingleTransaction: Number(maxSingleTransaction),
+        }).unwrap();
       }
 
       onSuccess?.();
+      toast.success(
+        isEditMode
+          ? "Account limits updated successfully"
+          : "Bank account created successfully",
+      );
       onClose();
     } catch (err: unknown) {
+      const apiMessage =
+        typeof err === "object" &&
+        err !== null &&
+        "data" in err &&
+        typeof (err as { data?: { message?: unknown } }).data?.message ===
+          "string"
+          ? (err as { data: { message: string } }).data.message
+          : null;
+
       const message =
-        err instanceof Error ? err.message : "Something went wrong.";
+        apiMessage ||
+        (err instanceof Error ? err.message : "Something went wrong.");
       setErrorMsg(message);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -124,11 +127,11 @@ function AccountFormInner({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-foreground">
-            {isEditMode ? "Edit Bank Account" : "Create Bank Account"}
+            {isEditMode ? "Update Account Limits" : "Create Bank Account"}
           </h2>
           <p className="text-xs text-muted-foreground">
             {isEditMode
-              ? `Updating account ${editAccount?.accountNumber ?? ""}`
+              ? `Updating limits for ${editAccount?.accountNumber ?? ""}`
               : "Open a new bank account for a registered customer."}
           </p>
         </div>
@@ -174,9 +177,10 @@ function AccountFormInner({
             Account Type
           </label>
           <select
+            disabled={isEditMode}
             value={accountType}
             onChange={(e) => setAccountType(e.target.value as TAccountType)}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             <option value="Savings Account">Savings Account</option>
             <option value="Current Account">Current Account</option>
@@ -298,7 +302,7 @@ export default function CreateAccountModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]">
       <AccountFormInner
-        key={editAccount ? editAccount.id : "new"}
+        key={editAccount ? `edit-${editAccount.id}` : "new"}
         onClose={onClose}
         mode={mode}
         defaultEmail={defaultEmail}

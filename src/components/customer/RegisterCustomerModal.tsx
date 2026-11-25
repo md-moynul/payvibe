@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Spinner } from "@heroui/react";
+import { Button, Spinner, toast } from "@heroui/react";
 import { X, UserPlus } from "lucide-react";
 import type { IDummyCustomer } from "./CustomerStatsGrid";
 import {
@@ -62,6 +62,7 @@ export default function RegisterCustomerModal({
       setPin("");
       setShowPassword(false);
       setShowPin(false);
+      toast.success("Customer registered successfully");
       onClose();
     } catch (err: unknown) {
       const apiError = err as { data?: { message?: string }; message?: string };
@@ -70,6 +71,7 @@ export default function RegisterCustomerModal({
         apiError?.message ||
         "Failed to register customer.";
       setErrorMsg(message);
+      toast.danger(message);
       dispatch(setCustomerError(message));
     }
   };

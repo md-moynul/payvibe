@@ -9,6 +9,7 @@ import {
   AlertContent,
   AlertTitle,
   AlertDescription,
+  toast,
 } from "@heroui/react";
 import { X, Snowflake, ShieldAlert } from "lucide-react";
 
@@ -67,6 +68,7 @@ export default function FreezeAccountModal({
       setReason("");
       setErrorMsg(null);
       onAccountFrozen?.();
+      toast.success("Account frozen successfully");
       onClose();
     } catch (err: unknown) {
       const message =
