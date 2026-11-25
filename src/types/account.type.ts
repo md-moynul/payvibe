@@ -44,3 +44,20 @@ export interface IRegisterCustomerResponse {
   message: string;
   data: IDummyCustomer;
 }
+export interface IAccountsListResponse {
+  success: boolean;
+  message: string;
+  data: IAccount[];
+}
+export interface IUpdateAccountStatusPayload {
+  id: string;
+  status: "Active" | "Frozen" | "Closed";
+  reason?: string;
+}
+
+export interface IUpdateAccountLimitsPayload {
+  id: string;
+  dailyLimit?: number;
+  maxSingleTransaction?: number;
+  minBalance?: number;
+}
