@@ -2,6 +2,7 @@ import { combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./features/auth/auth.slice";
 import accountReducer from "./features/account/account.slice";
 import customerReducer from "./features/customer/customer.slice";
+import staffReducer from "./features/staff/staff.slice";
 import { baseApi } from "./baseApi";
 
 export const rootReducer = combineReducers({
@@ -9,4 +10,5 @@ export const rootReducer = combineReducers({
   auth: authReducer,
   account: accountReducer,
   customer: customerReducer,
+  staff:staffReducer,
 });
