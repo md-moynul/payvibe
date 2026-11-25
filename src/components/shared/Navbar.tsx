@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Button, Chip, CloseIcon } from "@heroui/react";
+import { Avatar, AvatarFallback, Button, Chip, CloseIcon } from "@heroui/react";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import {
   clearAuth,
@@ -12,14 +12,6 @@ import {
 } from "@/redux/features/auth";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
-const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "Accounts", href: "/dashboard/customer/accounts" },
-  { label: "Transfers", href: "/dashboard/customer/transfers" },
-  { label: "Transactions", href: "/dashboard/customer/transactions" },
-  { label: "Loans", href: "/dashboard/customer/loans" },
-];
 
 function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -41,6 +33,13 @@ function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function getRoleBadgeColor(userRole?: string): "danger" | "warning" | "accent" {
+  const normalized = userRole?.toLowerCase().replace(/\s+/g, "-");
+  if (normalized === "admin") return "danger";
+  if (normalized === "bank-staff" || normalized === "bank staff") return "warning";
+  return "accent";
+}
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dispatch = useAppDispatch();
@@ -48,6 +47,7 @@ export default function Navbar() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const role = useAppSelector(selectUserRole);
   const router = useRouter();
+
   const roleNavLinks = React.useMemo(() => {
     if (!isAuthenticated) {
       return [{ label: "Home", href: "/" }];
@@ -91,6 +91,8 @@ export default function Navbar() {
     }
   };
 
+  const roleBadgeColor = getRoleBadgeColor(role);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
       <nav
@@ -131,22 +133,48 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Right: Auth / Role Action Area */}
+        {/* Right: User Profile & Auth Action Area */}
         <div className="flex items-center gap-3">
           {isAuthenticated && user && (
-            <div className="hidden md:flex items-center gap-2">
-              <span className="text-sm font-medium">
-                {user.name || user.email}
-              </span>
-              <Chip size="sm" variant="soft" color="accent">
-                {role}
+            <div className="hidden md:flex items-center gap-3 rounded-full border border-border/80 bg-default-100/60 dark:bg-default-50/10 px-3 py-1.5 shadow-xs transition-all hover:bg-default-100/90 hover:border-border">
+              <Avatar
+                size="sm"
+                color={roleBadgeColor}
+                variant="soft"
+                className="ring-1 ring-border/50"
+              >
+                <AvatarFallback className="font-semibold text-xs">
+                  {(user.name || user.email || "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-semibold text-foreground leading-tight max-w-30 truncate">
+                  {user.name || user.email?.split("@")[0]}
+                </span>
+                {user.email && (
+                  <span className="text-[10px] text-muted-foreground leading-tight max-w-30 truncate">
+                    {user.email}
+                  </span>
+                )}
+              </div>
+
+              <Chip
+                size="sm"
+                variant="soft"
+                color={roleBadgeColor}
+                className="capitalize font-semibold text-[10px] tracking-wide h-5 px-2"
+              >
+                {role || "Customer"}
               </Chip>
             </div>
           )}
 
           <Button
-            variant={isAuthenticated ? "secondary" : "primary"}
+            size="sm"
+            variant={isAuthenticated ? "outline" : "primary"}
             onPress={handleAuthAction}
+            className="font-medium rounded-full px-4"
           >
             {isAuthenticated ? "Sign Out" : "Sign In"}
           </Button>
@@ -155,17 +183,54 @@ export default function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {isMenuOpen && (
-        <div className="sm:hidden border-t border-border bg-background px-4 py-4 flex flex-col gap-2">
-          {navLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="w-full py-2 text-base font-medium text-foreground hover:text-primary transition-colors block"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+        <div className="sm:hidden border-t border-border bg-background px-4 py-4 flex flex-col gap-3">
+          {/* User Profile Card on Mobile */}
+          {isAuthenticated && user && (
+            <div className="flex items-center justify-between p-3 rounded-xl border border-border/80 bg-default-100/60 dark:bg-default-50/10">
+              <div className="flex items-center gap-3">
+                <Avatar
+                  size="md"
+                  color={roleBadgeColor}
+                  variant="soft"
+                  className="ring-1 ring-border/50"
+                >
+                  <AvatarFallback className="font-semibold text-sm">
+                    {(user.name || user.email || "U").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col text-left">
+                  <span className="text-sm font-semibold text-foreground">
+                    {user.name || user.email?.split("@")[0]}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate max-w-42.5">
+                    {user.email}
+                  </span>
+                </div>
+              </div>
+              <Chip
+                size="sm"
+                variant="soft"
+                color={roleBadgeColor}
+                className="capitalize font-semibold text-[11px] h-5 px-2"
+              >
+                {role || "Customer"}
+              </Chip>
+            </div>
+          )}
+
+          {/* Navigation Links */}
+          <div className="flex flex-col gap-1">
+            {roleNavLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="w-full py-2 px-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-default-100 hover:text-primary transition-colors block"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </header>
