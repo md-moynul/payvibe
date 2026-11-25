@@ -14,3 +14,16 @@ export interface IInitialState {
   loading: boolean;
   error: string | null;
 }
+export interface IUpdateCustomerKycPayload {
+  id: string;
+  kycVerified: boolean;
+}
+
+export interface IUpdateCustomerKycResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    kycVerified: boolean;
+  };
+}

@@ -1,9 +1,10 @@
-
-
 import { baseApi } from "@/redux/baseApi";
-import { ICustomersResponse, IRegisterCustomerPayload, IRegisterCustomerResponse } from "@/types/account.type";
-
-
+import {
+  ICustomersResponse,
+  IRegisterCustomerPayload,
+  IRegisterCustomerResponse,
+} from "@/types/account.type";
+import { IUpdateCustomerKycPayload, IUpdateCustomerKycResponse } from "@/types/auth.type";
 
 export const customerApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -22,8 +23,22 @@ export const customerApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["customers"],
     }),
+    updateCustomerKyc: builder.mutation<
+      IUpdateCustomerKycResponse,
+      IUpdateCustomerKycPayload
+    >({
+      query: ({ id, kycVerified }) => ({
+        url: `/customers/${id}/kyc`,
+        method: "PATCH",
+        body: { kycVerified },
+      }),
+      invalidatesTags: ["customers"],
+    }),
   }),
 });
 
-export const { useGetCustomersQuery, useRegisterCustomerMutation } =
-  customerApi;
+export const {
+  useGetCustomersQuery,
+  useRegisterCustomerMutation,
+  useUpdateCustomerKycMutation,
+} = customerApi;

@@ -24,6 +24,9 @@ export function getRoleAccess(rawRole?: string | null) {
   // TODO: Revisit if delegating staff management to senior staff is ever needed
   const canManageStaff = isAdmin;
 
+  // KYC approval is strictly restricted to Admin
+  const canApproveKyc = isAdmin;
+
   return {
     role,
     isAdmin,
@@ -34,5 +37,6 @@ export function getRoleAccess(rawRole?: string | null) {
     canCreateAccount: canManageAccounts,
     canFreezeAccount: canManageAccounts,
     canManageStaff,
+    canApproveKyc,
   };
 }
