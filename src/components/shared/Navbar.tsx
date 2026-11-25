@@ -58,6 +58,7 @@ export default function Navbar() {
         { label: "Dashboard", href: "/dashboard/admin" },
         { label: "Customers", href: "/dashboard/admin/customers" },
         { label: "Accounts", href: "/dashboard/admin/accounts" },
+        { label: "Staff", href: "/dashboard/admin/staff" },
         { label: "Loans", href: "/dashboard/admin/loans" },
       ];
     }

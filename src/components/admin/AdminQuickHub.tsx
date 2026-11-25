@@ -159,6 +159,26 @@ export default function AdminQuickHub({
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
           </Link>
+
+          <Link
+            href="/dashboard/admin/staff"
+            className="flex items-center justify-between rounded-xl border border-border/80 bg-background/50 p-3 text-sm font-medium transition hover:border-primary/50 hover:bg-muted/40"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="rounded-lg bg-purple-500/10 p-2 text-purple-600 dark:text-purple-400">
+                <ShieldCheck className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-foreground">
+                  Staff Management
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Operator credentials & roles
+                </div>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
         </div>
       </Card>
 
