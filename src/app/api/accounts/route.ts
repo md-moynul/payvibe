@@ -7,7 +7,7 @@ import type {
   TAccountStatus,
   TAccountType,
 } from "@/types/account.type";
-import { checkRole } from "@/lib/checkRole";
+import { checkRole, isStaffOrAdmin } from "@/lib/checkRole";
 
 const ALLOWED_ACCOUNT_TYPES: TAccountType[] = [
   "Savings Account",
@@ -18,11 +18,6 @@ const ALLOWED_ACCOUNT_TYPES: TAccountType[] = [
 function generateAccountNumber(): string {
   const randomDigits = Math.floor(10000000 + Math.random() * 90000000);
   return `PV-${randomDigits}`;
-}
-
-function isStaffOrAdmin(role?: string | null): boolean {
-  const normalized = role?.toLowerCase();
-  return normalized === "admin" || normalized === "bank-staff";
 }
 
 export async function GET() {
