@@ -86,18 +86,24 @@ export default function AdminLoansPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div
+          role="tablist"
+          aria-label="Filter loans by status"
+          className="inline-flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/80 bg-card p-1 shadow-2xs"
+        >
           {STATUS_FILTERS.map((status) => {
-            const active = statusFilter === status;
+            const isSelected = statusFilter === status;
             return (
               <button
                 key={status}
                 type="button"
+                role="tab"
+                aria-selected={isSelected}
                 onClick={() => setStatusFilter(status)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border bg-background text-muted-foreground hover:text-foreground"
+                className={`cursor-pointer whitespace-nowrap rounded-full px-3.5 py-1 text-xs transition-all duration-200 outline-none ${
+                  isSelected
+                    ? "bg-blue-500 font-semibold text-white shadow-xs"
+                    : "font-medium text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                 }`}
               >
                 {status}

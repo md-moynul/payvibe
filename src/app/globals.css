@@ -1,2 +1,15 @@
 @import "tailwindcss";
-@import "@heroui/styles"; 
+@import "@heroui/styles";
+
+/* Ensure no focus ring or double-border artifacts on tabs */
+.tabs__tab:focus,
+.tabs__tab:focus-visible,
+.tabs__tab[data-focus-visible="true"],
+.tabs__tab[data-focused="true"] {
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-offset-width: 0px !important;
+  --tw-ring-width: 0px !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}

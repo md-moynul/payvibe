@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Alert, AlertIndicator, AlertContent, AlertTitle, toast } from "@heroui/react";
+import {
+  Alert,
+  AlertIndicator,
+  AlertContent,
+  AlertTitle,
+  toast,
+} from "@heroui/react";
 import { useAppSelector } from "@/redux/hook";
 import { selectCurrentUser } from "@/redux/features/auth";
 import {
@@ -9,10 +15,15 @@ import {
   useUpdateAccountStatusMutation,
 } from "@/redux/features/account";
 import { useGetCustomersQuery } from "@/redux/features/customer";
+import { useGetTransactionsQuery } from "@/redux/features/transaction/transaction.api";
+import { useGetLoansQuery } from "@/redux/features/loan/loan.api";
 import type { IAccount } from "@/types/account.type";
 import type { ICustomerWithAccount } from "@/components/customer/CustomersTable";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatsGrid from "@/components/admin/AdminStatsGrid";
+import AdminTransactionCharts from "@/components/admin/AdminTransactionCharts";
+import AdminActivityAndLoanCharts from "@/components/admin/AdminActivityAndLoanCharts";
+import AdminAccountDistributionChart from "@/components/admin/AdminAccountDistributionChart";
 import RecentAccountsTable from "@/components/admin/RecentAccountsTable";
 import RecentCustomersTable from "@/components/admin/RecentCustomersTable";
 import AdminQuickHub from "@/components/admin/AdminQuickHub";
@@ -50,6 +61,20 @@ export default function AdminDashboardPage() {
     refetch: refetchCustomers,
   } = useGetCustomersQuery();
 
+  const {
+    data: transactionsData,
+    isLoading: isTransactionsLoading,
+    isError: isTransactionsError,
+    refetch: refetchTransactions,
+  } = useGetTransactionsQuery({ page: 1, limit: 100 });
+
+  const {
+    data: loansData,
+    isLoading: isLoansLoading,
+    isError: isLoansError,
+    refetch: refetchLoans,
+  } = useGetLoansQuery();
+
   const [updateAccountStatus, { isLoading: isUpdatingStatus }] =
     useUpdateAccountStatusMutation();
 
@@ -62,6 +87,13 @@ export default function AdminDashboardPage() {
     () => (customersData?.data ?? []) as ICustomerWithAccount[],
     [customersData],
   );
+
+  const transactions = useMemo(
+    () => transactionsData?.data ?? [],
+    [transactionsData],
+  );
+
+  const loans = useMemo(() => loansData?.data ?? [], [loansData]);
 
   // Aggregated Metrics
   const totalBalance = useMemo(
@@ -77,6 +109,33 @@ export default function AdminDashboardPage() {
   const verifiedCustomers = customers.filter((c) => c.kycVerified).length;
   const pendingKYC = totalCustomers - verifiedCustomers;
 
+  const totalDeposits = useMemo(
+    () =>
+      transactions
+        .filter((t) => t.type === "Deposit" && t.status !== "Failed")
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0),
+    [transactions],
+  );
+
+  const totalWithdrawals = useMemo(
+    () =>
+      transactions
+        .filter((t) => t.type === "Withdrawal" && t.status !== "Failed")
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0),
+    [transactions],
+  );
+
+  const totalTransactions =
+    transactionsData?.pagination?.total ?? transactions.length;
+
+  const pendingLoansCount = useMemo(
+    () =>
+      loans.filter(
+        (l) => l.status === "Pending" || l.status === "Under Review",
+      ).length,
+    [loans],
+  );
+
   // Account Type Distribution
   const savingsCount = accounts.filter(
     (a) => a.accountType === "Savings Account",
@@ -90,7 +149,12 @@ export default function AdminDashboardPage() {
 
   const handleRefresh = async () => {
     try {
-      await Promise.all([refetchAccounts(), refetchCustomers()]);
+      await Promise.all([
+        refetchAccounts(),
+        refetchCustomers(),
+        refetchTransactions(),
+        refetchLoans(),
+      ]);
       toast.success("Dashboard data refreshed");
     } catch {
       toast.danger("Failed to refresh dashboard data");
@@ -128,8 +192,16 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const isLoading = isAccountsLoading || isCustomersLoading;
-  const hasError = isAccountsError || isCustomersError;
+  const isLoading =
+    isAccountsLoading ||
+    isCustomersLoading ||
+    isTransactionsLoading ||
+    isLoansLoading;
+  const hasError =
+    isAccountsError ||
+    isCustomersError ||
+    isTransactionsError ||
+    isLoansError;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -152,7 +224,8 @@ export default function AdminDashboardPage() {
           <AlertIndicator />
           <AlertContent>
             <AlertTitle>
-              Failed to load some dashboard statistics. Please click refresh to retry.
+              Failed to load some dashboard statistics. Please click refresh to
+              retry.
             </AlertTitle>
           </AlertContent>
         </Alert>
@@ -167,10 +240,36 @@ export default function AdminDashboardPage() {
         totalCustomers={totalCustomers}
         verifiedCustomers={verifiedCustomers}
         pendingKYC={pendingKYC}
+        totalDeposits={totalDeposits}
+        totalWithdrawals={totalWithdrawals}
+        totalTransactions={totalTransactions}
+        pendingLoansCount={pendingLoansCount}
         isLoading={isLoading}
       />
 
-      {/* 3. Main Body: Tables + Quick Hub */}
+      {/* 3. Transaction Analytics Charts */}
+      <AdminTransactionCharts
+        transactions={transactions}
+        isLoading={isLoading}
+      />
+
+      {/* 3b. Loan & Monthly Activity Charts */}
+      <AdminActivityAndLoanCharts
+        transactions={transactions}
+        loans={loans}
+        isLoading={isLoading}
+      />
+
+      {/* 3c. Account Distribution Donut Chart */}
+      <AdminAccountDistributionChart
+        totalAccounts={totalAccounts}
+        savingsCount={savingsCount}
+        currentCount={currentCount}
+        businessCount={businessCount}
+        isLoading={isLoading}
+      />
+
+      {/* 4. Main Body: Tables + Quick Hub */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left (2 Cols on lg): Recent Accounts & Recent Customers */}
         <div className="space-y-8 lg:col-span-2">
