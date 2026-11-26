@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Button,
   Card,
+  CardContent,
+  Chip,
   Spinner,
   Alert,
   AlertIndicator,
@@ -11,21 +14,24 @@ import {
   AlertTitle,
   AlertDescription,
 } from "@heroui/react";
-import { Send, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import {
+  Send,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ArrowLeftRight,
+} from "lucide-react";
 import TransactionFilters from "@/components/transaction/TransactionFilters";
 import TransactionsTable from "@/components/transaction/TransactionsTable";
-import TransferFundsModal from "@/components/transaction/TransferFundsModal";
 import TransactionReceiptModal from "@/components/transaction/TransactionReceiptModal";
-import DepositWithdrawalModal from "@/components/request/DepositWithdrawalModal";
 import RequestsTable from "@/components/request/RequestsTable";
 import { useGetTransactionsQuery } from "@/redux/features/transaction/transaction.api";
 import { useGetAccountsQuery } from "@/redux/features/account/account.api";
 import { useGetRequestsQuery } from "@/redux/features/request/request.api";
 import type { ITransaction } from "@/types/transaction.type";
 import type { IAccount } from "@/types/account.type";
-import type { TRequestType } from "@/types/request.type";
 
 export default function CustomerTransactionsPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [type, setType] = useState("ALL");
   const [status, setStatus] = useState("ALL");
@@ -33,33 +39,23 @@ export default function CustomerTransactionsPage() {
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
 
-  const [isTransferOpen, setIsTransferOpen] = useState(false);
-  const [requestModalState, setRequestModalState] = useState<{
-    isOpen: boolean;
-    defaultType: TRequestType;
-  }>({
-    isOpen: false,
-    defaultType: "Deposit",
-  });
   const [selectedReceipt, setSelectedReceipt] = useState<ITransaction | null>(
     null,
   );
 
-  const { data: accountsData, refetch: refetchAccounts } =
-    useGetAccountsQuery();
+  const { data: accountsData } = useGetAccountsQuery();
   const accounts = useMemo<IAccount[]>(
     () => (accountsData?.data as IAccount[] | undefined) ?? [],
     [accountsData],
   );
 
-  const { data: requestsData, refetch: refetchRequests } =
-    useGetRequestsQuery();
+  const { data: requestsData } = useGetRequestsQuery();
   const requests = useMemo(
     () => requestsData?.data ?? [],
     [requestsData],
   );
 
-  const { data, isLoading, isError, refetch } = useGetTransactionsQuery({
+  const { data, isLoading, isError } = useGetTransactionsQuery({
     search,
     type,
     status: status === "ALL" ? undefined : status,
@@ -75,6 +71,34 @@ export default function CustomerTransactionsPage() {
   );
   const totalPages = data?.pagination?.totalPages ?? 1;
 
+  // Inflow & Outflow stats
+  const stats = useMemo(() => {
+    let inflow = 0;
+    let outflow = 0;
+    const accountNumbers = new Set(accounts.map((a) => a.accountNumber));
+
+    for (const txn of transactions) {
+      const amount = Number(txn.amount ?? 0);
+      if (txn.status === "Completed") {
+        if (
+          txn.type === "Deposit" ||
+          txn.type === "Loan Disbursement" ||
+          (txn.receiverAccount && accountNumbers.has(txn.receiverAccount))
+        ) {
+          inflow += amount;
+        } else {
+          outflow += amount;
+        }
+      }
+    }
+
+    return {
+      inflow,
+      outflow,
+      totalCount: transactions.length,
+    };
+  }, [transactions, accounts]);
+
   const handleResetFilters = () => {
     setSearch("");
     setType("ALL");
@@ -84,54 +108,54 @@ export default function CustomerTransactionsPage() {
     setPage(1);
   };
 
-  const handleAfterAction = () => {
-    refetch();
-    refetchAccounts();
-    refetchRequests();
-  };
-
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
+      {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Transactions &amp; Transfers
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            View your transaction history, transfer funds, submit deposit or
-            withdrawal requests, and inspect receipts.
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Transactions &amp; Transfers
+            </h1>
+            <Chip size="sm" variant="soft" color="accent" className="font-semibold text-xs">
+              Live Ledger
+            </Chip>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Search, filter, and inspect receipts for all your bank account activity.
           </p>
         </div>
 
+        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant="outline"
             onPress={() =>
-              setRequestModalState({ isOpen: true, defaultType: "Deposit" })
+              router.push("/dashboard/customer/deposits-withdrawals/deposits")
             }
             className="gap-1.5 font-medium"
           >
-            <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
-            <span>Request Deposit</span>
+            <ArrowDownLeft className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Deposit Funds</span>
           </Button>
 
           <Button
             type="button"
             variant="outline"
             onPress={() =>
-              setRequestModalState({ isOpen: true, defaultType: "Withdrawal" })
+              router.push("/dashboard/customer/deposits-withdrawals/withdrawals")
             }
             className="gap-1.5 font-medium"
           >
-            <ArrowUpRight className="h-4 w-4 text-amber-600" />
-            <span>Request Withdrawal</span>
+            <ArrowUpRight className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <span>Withdraw Funds</span>
           </Button>
 
           <Button
             type="button"
             variant="primary"
-            onPress={() => setIsTransferOpen(true)}
+            onPress={() => router.push("/dashboard/customer/transfers")}
             className="gap-2 font-medium"
           >
             <Send className="h-4 w-4" />
@@ -140,6 +164,58 @@ export default function CustomerTransactionsPage() {
         </div>
       </div>
 
+      {/* Metrics Highlights */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <CardContent className="flex items-center gap-3.5 p-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <ArrowDownLeft className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="block text-xs font-medium text-muted-foreground">
+                Inflow (Deposits &amp; Credits)
+              </span>
+              <span className="text-xl font-bold text-foreground tracking-tight">
+                +৳{stats.inflow.toLocaleString("en-BD")}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <CardContent className="flex items-center gap-3.5 p-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <ArrowUpRight className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="block text-xs font-medium text-muted-foreground">
+                Outflow (Transfers &amp; Debits)
+              </span>
+              <span className="text-xl font-bold text-foreground tracking-tight">
+                -৳{stats.outflow.toLocaleString("en-BD")}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <CardContent className="flex items-center gap-3.5 p-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <ArrowLeftRight className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="block text-xs font-medium text-muted-foreground">
+                Transactions Listed
+              </span>
+              <span className="text-xl font-bold text-foreground tracking-tight">
+                {stats.totalCount} Records
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter Bar / Form */}
       <TransactionFilters
         search={search}
         type={type}
@@ -169,11 +245,12 @@ export default function CustomerTransactionsPage() {
         onReset={handleResetFilters}
       />
 
+      {/* Transactions Table */}
       {isLoading ? (
-        <Card className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-10 text-center">
+        <Card className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-12 text-center shadow-sm">
           <Spinner size="md" color="accent" />
           <span className="text-sm text-muted-foreground">
-            Loading transactions...
+            Loading your transaction history...
           </span>
         </Card>
       ) : isError ? (
@@ -197,36 +274,32 @@ export default function CustomerTransactionsPage() {
       )}
 
       {/* Deposit & Withdrawal Requests History */}
-      <div className="space-y-3 pt-2">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">
-            Deposit &amp; Withdrawal Requests
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Track the approval status of your deposit and withdrawal requests.
-          </p>
+      <div className="space-y-3 pt-4 border-t border-border">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">
+              Deposit &amp; Withdrawal Requests
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Track the approval status of your deposit and withdrawal requests.
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onPress={() => router.push("/dashboard/customer/deposits-withdrawals")}
+            className="gap-1.5 font-medium text-xs w-fit"
+          >
+            <span>Manage Requests Portal</span>
+          </Button>
         </div>
 
         <RequestsTable requests={requests} />
       </div>
 
-      <TransferFundsModal
-        isOpen={isTransferOpen}
-        accounts={accounts}
-        onClose={() => setIsTransferOpen(false)}
-        onSuccess={handleAfterAction}
-      />
-
-      <DepositWithdrawalModal
-        isOpen={requestModalState.isOpen}
-        accounts={accounts}
-        defaultType={requestModalState.defaultType}
-        onClose={() =>
-          setRequestModalState((prev) => ({ ...prev, isOpen: false }))
-        }
-        onSuccess={handleAfterAction}
-      />
-
+      {/* Digital Receipt Modal */}
       <TransactionReceiptModal
         transaction={selectedReceipt}
         onClose={() => setSelectedReceipt(null)}

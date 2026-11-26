@@ -11,6 +11,10 @@ import {
 } from "@heroui/react";
 import {
   ArrowLeftRight,
+  ArrowDownLeft,
+  ArrowUpRight,
+  CreditCard,
+  Landmark,
   Flag,
   CheckCircle2,
   Receipt,
@@ -48,6 +52,47 @@ function getStatusChipColor(
       return "danger";
     default:
       return "default";
+  }
+}
+
+function getTypeBadgeConfig(type: string) {
+  switch (type) {
+    case "Transfer":
+      return {
+        color: "accent" as const,
+        icon: ArrowLeftRight,
+        label: "Transfer",
+      };
+    case "Deposit":
+      return {
+        color: "success" as const,
+        icon: ArrowDownLeft,
+        label: "Deposit",
+      };
+    case "Withdrawal":
+      return {
+        color: "warning" as const,
+        icon: ArrowUpRight,
+        label: "Withdrawal",
+      };
+    case "Loan Repayment":
+      return {
+        color: "accent" as const,
+        icon: CreditCard,
+        label: "Loan Repayment",
+      };
+    case "Loan Disbursement":
+      return {
+        color: "success" as const,
+        icon: Landmark,
+        label: "Disbursement",
+      };
+    default:
+      return {
+        color: "default" as const,
+        icon: ArrowLeftRight,
+        label: type || "Transaction",
+      };
   }
 }
 
@@ -107,33 +152,41 @@ export default function TransactionsTable({
                 const isFlagged = Boolean(
                   txn.flagged || txn.status === "Flagged",
                 );
+                const typeConfig = getTypeBadgeConfig(txn.type);
+                const TypeIcon = typeConfig.icon;
 
                 return (
                   <tr key={txn.id} className="transition hover:bg-muted/30">
                     {/* Txn ID */}
-                    <td className="px-5 py-4 font-mono text-xs whitespace-nowrap">
-                      <div>
-                        <p className="font-bold text-foreground">
+                    <td className="px-5 py-4 whitespace-nowrap min-w-[155px]">
+                      <div className="whitespace-nowrap">
+                        <span className="font-mono text-xs font-bold text-foreground tracking-tight whitespace-nowrap inline-block select-all">
                           {txn.transactionId}
-                        </p>
+                        </span>
                         {isFlagged && txn.flagReason && (
-                          <p className="mt-1 font-sans text-xs text-rose-600 dark:text-rose-400">
+                          <p className="mt-0.5 font-sans text-xs text-rose-600 dark:text-rose-400">
                             Flag: {txn.flagReason}
                           </p>
                         )}
                       </div>
                     </td>
 
-                    {/* Type - Compact with Tooltip for optional description */}
+                    {/* Type - Styled Chip with Tooltip for description */}
                     <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-foreground">
-                          {txn.type}
-                        </span>
+                      <div className="inline-flex items-center gap-1.5">
+                        <Chip
+                          size="sm"
+                          variant="soft"
+                          color={typeConfig.color}
+                          className="font-medium gap-1 px-2.5"
+                        >
+                          <TypeIcon className="h-3 w-3 shrink-0" />
+                          <span>{typeConfig.label}</span>
+                        </Chip>
                         {txn.description && (
                           <Tooltip>
                             <TooltipTrigger>
-                              <span className="cursor-help text-muted-foreground/60 hover:text-foreground">
+                              <span className="cursor-help rounded-full p-0.5 text-muted-foreground/60 hover:bg-muted hover:text-foreground">
                                 <Info className="h-3.5 w-3.5" />
                               </span>
                             </TooltipTrigger>

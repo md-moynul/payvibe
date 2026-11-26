@@ -70,6 +70,33 @@ export default function TransactionFilters({
   return (
     <Card className="rounded-2xl border border-border bg-card shadow-sm">
       <CardContent className="p-4 sm:p-5 space-y-4">
+        {/* Top Header of Filter Bar */}
+        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Filter Transactions
+            </span>
+            {hasActiveFilters && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                Active Filter
+              </span>
+            )}
+          </div>
+
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onPress={onReset}
+            isDisabled={!hasActiveFilters}
+            className="h-7 gap-1.5 font-medium text-xs text-muted-foreground hover:text-foreground"
+          >
+            <RotateCcw className="h-3 w-3" />
+            <span>Reset Filters</span>
+          </Button>
+        </div>
+
         {/* Filters Grid */}
         <div
           className={`grid grid-cols-1 gap-3.5 sm:grid-cols-2 ${
@@ -90,6 +117,7 @@ export default function TransactionFilters({
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="TXN-..., PV-..."
+                className="h-10 font-medium"
               />
               {search && (
                 <InputGroupSuffix>
@@ -106,7 +134,7 @@ export default function TransactionFilters({
             </InputGroup>
           </div>
 
-          {/* Transaction Type Dropdown (Appears once) */}
+          {/* Transaction Type Dropdown */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-foreground">
               Transaction Type
@@ -159,7 +187,7 @@ export default function TransactionFilters({
               type="date"
               value={fromDate}
               onChange={(e) => onFromDateChange(e.target.value)}
-              className="w-full"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -172,33 +200,9 @@ export default function TransactionFilters({
               type="date"
               value={toDate}
               onChange={(e) => onToDateChange(e.target.value)}
-              className="w-full"
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
-        </div>
-
-        {/* Bottom Toolbar: Context description & Permanent HeroUI Reset Filters button */}
-        <div className="flex items-center justify-between border-t border-border/60 pt-3 text-xs">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Filter className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span>Filter by reference ID, type, or date range</span>
-            {hasActiveFilters && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                Filtered
-              </span>
-            )}
-          </div>
-
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onPress={onReset}
-            className="h-8 gap-1.5 font-medium text-xs text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Reset Filters</span>
-          </Button>
         </div>
       </CardContent>
     </Card>
