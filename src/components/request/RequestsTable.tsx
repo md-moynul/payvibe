@@ -52,7 +52,7 @@ export default function RequestsTable({
   if (requests.length === 0) {
     return (
       <Card className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400">
           <Clock className="h-5 w-5" />
         </div>
         <p className="text-sm font-medium text-foreground">
@@ -66,11 +66,11 @@ export default function RequestsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <tr className="border-b border-border/70 bg-muted/25 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {showCustomer && (
                 <th className="px-5 py-3.5 whitespace-nowrap">Customer</th>
               )}

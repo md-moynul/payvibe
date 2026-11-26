@@ -1,17 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Card,
-  CardContent,
-  Button,
-  Label,
-  Input,
-  InputGroup,
-  InputGroupPrefix,
-  InputGroupInput,
-  InputGroupSuffix,
-} from "@heroui/react";
+import { Card, Button } from "@heroui/react";
 import { Search, RotateCcw, ChevronDown, X, Filter } from "lucide-react";
 
 interface ITransactionFiltersProps {
@@ -68,143 +58,115 @@ export default function TransactionFilters({
     Boolean(toDate);
 
   return (
-    <Card className="rounded-2xl border border-border bg-card shadow-sm">
-      <CardContent className="p-4 sm:p-5 space-y-4">
-        {/* Top Header of Filter Bar */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-primary" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Filter Transactions
-            </span>
-            {hasActiveFilters && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                Active Filter
-              </span>
-            )}
-          </div>
-
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onPress={onReset}
-            isDisabled={!hasActiveFilters}
-            className="h-7 gap-1.5 font-medium text-xs text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="h-3 w-3" />
-            <span>Reset Filters</span>
-          </Button>
+    <Card className="rounded-2xl border border-border/70 bg-card p-3 shadow-xs transition-all duration-200">
+      <div className="flex flex-wrap items-center gap-2.5">
+        {/* Filter Icon Anchor with Active Indicator */}
+        <div className="relative hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+          <Filter className="h-4 w-4" />
+          {hasActiveFilters && (
+            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-card animate-pulse" />
+          )}
         </div>
 
-        {/* Filters Grid */}
-        <div
-          className={`grid grid-cols-1 gap-3.5 sm:grid-cols-2 ${
-            showStatusFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        {/* Search Transaction ID */}
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search Transaction ID..."
+            className="h-9 w-full rounded-xl border border-border/80 bg-background pl-9 pr-8 text-xs font-medium text-foreground outline-none transition placeholder:text-muted-foreground/60 hover:border-border focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => onSearchChange("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition cursor-pointer"
+              aria-label="Clear search"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Transaction Type Dropdown */}
+        <div className="relative w-full sm:w-44 shrink-0">
+          <select
+            value={type}
+            onChange={(e) => onTypeChange(e.target.value)}
+            className="h-9 w-full appearance-none rounded-xl border border-border/80 bg-background pl-3 pr-8 text-xs font-medium text-foreground outline-none transition hover:border-border focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+          >
+            {TRANSACTION_TYPES.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+
+        {/* (Optional) Audit Status Filter */}
+        {showStatusFilter && (
+          <div className="relative w-full sm:w-36 shrink-0">
+            <select
+              value={status}
+              onChange={(e) => onStatusChange(e.target.value)}
+              className="h-9 w-full appearance-none rounded-xl border border-border/80 bg-background pl-3 pr-8 text-xs font-medium text-foreground outline-none transition hover:border-border focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+            >
+              {TRANSACTION_STATUSES.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+        )}
+
+        {/* From Date */}
+        <div className="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
+          <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap">
+            From:
+          </span>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => onFromDateChange(e.target.value)}
+            className="h-9 w-full sm:w-36 rounded-xl border border-border/80 bg-background px-2.5 text-xs font-medium text-foreground outline-none transition hover:border-border focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+          />
+        </div>
+
+        {/* To Date */}
+        <div className="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
+          <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap">
+            To:
+          </span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => onToDateChange(e.target.value)}
+            className="h-9 w-full sm:w-36 rounded-xl border border-border/80 bg-background px-2.5 text-xs font-medium text-foreground outline-none transition hover:border-border focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+          />
+        </div>
+
+        {/* Reset Button */}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onPress={onReset}
+          isDisabled={!hasActiveFilters}
+          className={`h-9 shrink-0 gap-1.5 font-medium text-xs rounded-xl border-border/70 transition-all ${
+            hasActiveFilters
+              ? "text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10 cursor-pointer shadow-2xs"
+              : "text-muted-foreground opacity-40 cursor-not-allowed"
           }`}
         >
-          {/* Search Txn ID with HeroUI InputGroup */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">
-              Search Transaction ID
-            </Label>
-            <InputGroup className="w-full">
-              <InputGroupPrefix>
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </InputGroupPrefix>
-              <InputGroupInput
-                type="text"
-                value={search}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="TXN-..., PV-..."
-                className="h-10 font-medium"
-              />
-              {search && (
-                <InputGroupSuffix>
-                  <button
-                    type="button"
-                    onClick={() => onSearchChange("")}
-                    className="rounded p-0.5 text-muted-foreground hover:text-foreground transition"
-                    aria-label="Clear search"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </InputGroupSuffix>
-              )}
-            </InputGroup>
-          </div>
-
-          {/* Transaction Type Dropdown */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">
-              Transaction Type
-            </Label>
-            <div className="relative flex items-center">
-              <select
-                value={type}
-                onChange={(e) => onTypeChange(e.target.value)}
-                className="h-10 w-full appearance-none rounded-xl border border-border bg-background pl-3.5 pr-9 text-sm font-medium text-foreground outline-none transition hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
-              >
-                {TRANSACTION_TYPES.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
-
-          {/* (Optional) Status Filter */}
-          {showStatusFilter && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">
-                Audit Status
-              </Label>
-              <div className="relative flex items-center">
-                <select
-                  value={status}
-                  onChange={(e) => onStatusChange(e.target.value)}
-                  className="h-10 w-full appearance-none rounded-xl border border-border bg-background pl-3.5 pr-9 text-sm font-medium text-foreground outline-none transition hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                >
-                  {TRANSACTION_STATUSES.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-          )}
-
-          {/* From Date with HeroUI Input */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">
-              From Date
-            </Label>
-            <Input
-              type="date"
-              value={fromDate}
-              onChange={(e) => onFromDateChange(e.target.value)}
-              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          {/* To Date with HeroUI Input */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">
-              To Date
-            </Label>
-            <Input
-              type="date"
-              value={toDate}
-              onChange={(e) => onToDateChange(e.target.value)}
-              className="h-10 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-        </div>
-      </CardContent>
+          <RotateCcw className="h-3 w-3" />
+          <span>Reset</span>
+        </Button>
+      </div>
     </Card>
   );
 }

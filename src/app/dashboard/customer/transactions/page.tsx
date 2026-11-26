@@ -166,50 +166,91 @@ export default function CustomerTransactionsPage() {
 
       {/* Metrics Highlights */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <CardContent className="flex items-center gap-3.5 p-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <ArrowDownLeft className="h-5 w-5" />
+        {/* 1. Inflow Card */}
+        <Card className="group relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-card via-card to-emerald-500/5 p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-md">
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl transition-all duration-300 group-hover:bg-emerald-500/20 pointer-events-none" />
+          <CardContent className="relative space-y-3 p-0">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Inflow Volume
+              </span>
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400">
+                <ArrowDownLeft className="h-4 w-4" />
+              </div>
             </div>
+
             <div>
-              <span className="block text-xs font-medium text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 Inflow (Deposits &amp; Credits)
-              </span>
-              <span className="text-xl font-bold text-foreground tracking-tight">
+              </p>
+              <div className="mt-1 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
                 +৳{stats.inflow.toLocaleString("en-BD")}
-              </span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border/50 text-xs text-muted-foreground">
+              Completed deposits &amp; incoming transfers
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <CardContent className="flex items-center gap-3.5 p-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <ArrowUpRight className="h-5 w-5" />
+        {/* 2. Outflow Card */}
+        <Card className="group relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-card via-card to-amber-500/5 p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-md">
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transition-all duration-300 group-hover:bg-amber-500/20 pointer-events-none" />
+          <CardContent className="relative space-y-3 p-0">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Outflow Volume
+              </span>
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
+                <ArrowUpRight className="h-4 w-4" />
+              </div>
             </div>
+
             <div>
-              <span className="block text-xs font-medium text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 Outflow (Transfers &amp; Debits)
-              </span>
-              <span className="text-xl font-bold text-foreground tracking-tight">
+              </p>
+              <div className="mt-1 text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
                 -৳{stats.outflow.toLocaleString("en-BD")}
-              </span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border/50 text-xs text-muted-foreground">
+              Completed transfers &amp; withdrawals
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <CardContent className="flex items-center gap-3.5 p-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <ArrowLeftRight className="h-5 w-5" />
+        {/* 3. Listed Records Card */}
+        <Card className="group relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-card via-card to-blue-500/5 p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40 hover:shadow-md">
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-all duration-300 group-hover:bg-blue-500/20 pointer-events-none" />
+          <CardContent className="relative space-y-3 p-0">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                Ledger Activity
+              </span>
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-2 text-blue-600 dark:text-blue-400">
+                <ArrowLeftRight className="h-4 w-4" />
+              </div>
             </div>
+
             <div>
-              <span className="block text-xs font-medium text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 Transactions Listed
-              </span>
-              <span className="text-xl font-bold text-foreground tracking-tight">
-                {stats.totalCount} Records
-              </span>
+              </p>
+              <div className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                {stats.totalCount}{" "}
+                <span className="text-xs font-normal text-muted-foreground">
+                  {stats.totalCount === 1 ? "record" : "records"}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border/50 text-xs text-muted-foreground">
+              Filtered activity across your accounts
             </div>
           </CardContent>
         </Card>

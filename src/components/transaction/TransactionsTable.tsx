@@ -114,7 +114,7 @@ export default function TransactionsTable({
   if (transactions.length === 0) {
     return (
       <Card className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400">
           <ArrowLeftRight className="h-5 w-5" />
         </div>
         <p className="text-sm font-medium text-foreground">
@@ -129,11 +129,11 @@ export default function TransactionsTable({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <tr className="border-b border-border/70 bg-muted/25 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <th className="px-5 py-3.5 whitespace-nowrap">Txn ID</th>
                 <th className="px-5 py-3.5 whitespace-nowrap">Type</th>
                 <th className="px-5 py-3.5 whitespace-nowrap">From / To</th>
@@ -147,16 +147,18 @@ export default function TransactionsTable({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/60">
               {transactions.map((txn) => {
                 const isFlagged = Boolean(
                   txn.flagged || txn.status === "Flagged",
                 );
                 const typeConfig = getTypeBadgeConfig(txn.type);
                 const TypeIcon = typeConfig.icon;
+                const isDeposit = txn.type === "Deposit" || txn.type === "Loan Disbursement";
+                const isWithdrawal = txn.type === "Withdrawal";
 
                 return (
-                  <tr key={txn.id} className="transition hover:bg-muted/30">
+                  <tr key={txn.id} className="transition-colors hover:bg-muted/20">
                     {/* Txn ID */}
                     <td className="px-5 py-4 whitespace-nowrap min-w-[155px]">
                       <div className="whitespace-nowrap">
@@ -199,43 +201,67 @@ export default function TransactionsTable({
                     </td>
 
                     {/* From / To */}
-                    <td className="px-5 py-4 text-xs font-mono text-muted-foreground whitespace-nowrap">
-                      <div className="space-y-0.5">
+                    <td className="px-5 py-4 text-xs whitespace-nowrap">
+                      <div className="space-y-1">
                         {txn.senderAccount && (
-                          <p>
-                            From:{" "}
-                            <span className="font-semibold text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-semibold text-muted-foreground w-8">From:</span>
+                            <span className="font-mono font-semibold text-foreground bg-muted/40 px-1.5 py-0.5 rounded-md">
                               {txn.senderAccount}
                             </span>
-                          </p>
+                          </div>
                         )}
                         {txn.receiverAccount && (
-                          <p>
-                            To:{" "}
-                            <span className="font-semibold text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-semibold text-muted-foreground w-8">To:</span>
+                            <span className="font-mono font-semibold text-foreground bg-muted/40 px-1.5 py-0.5 rounded-md">
                               {txn.receiverAccount}
                             </span>
-                          </p>
+                          </div>
                         )}
                         {!txn.senderAccount && !txn.receiverAccount && (
-                          <span>—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </div>
                     </td>
 
                     {/* Amount */}
-                    <td className="px-5 py-4 font-bold text-foreground whitespace-nowrap">
-                      ৳{Number(txn.amount ?? 0).toLocaleString("en-BD")}
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span
+                        className={`font-bold ${
+                          isDeposit
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : isWithdrawal
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-foreground"
+                        }`}
+                      >
+                        {isDeposit ? "+" : isWithdrawal ? "-" : ""}৳{Number(txn.amount ?? 0).toLocaleString("en-BD")}
+                      </span>
                     </td>
 
                     {/* Date */}
-                    <td className="px-5 py-4 text-xs text-muted-foreground whitespace-nowrap">
-                      {txn.createdAt
-                        ? new Date(txn.createdAt).toLocaleString("en-BD", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                          })
-                        : "—"}
+                    <td className="px-5 py-4 text-xs whitespace-nowrap">
+                      {txn.createdAt ? (
+                        <div className="space-y-0.5">
+                          <p className="font-medium text-foreground">
+                            {new Date(txn.createdAt).toLocaleDateString("en-BD", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {new Date(txn.createdAt).toLocaleTimeString("en-BD", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
 
                     {/* Status */}
@@ -261,7 +287,7 @@ export default function TransactionsTable({
                               size="sm"
                               variant="outline"
                               onPress={() => onViewReceipt(txn)}
-                              className="gap-1.5 font-medium"
+                              className="h-8 gap-1.5 font-medium text-xs rounded-xl border-border/70 hover:bg-muted/50 cursor-pointer"
                             >
                               <Receipt className="h-3.5 w-3.5" />
                               <span>Receipt</span>
@@ -274,7 +300,7 @@ export default function TransactionsTable({
                               variant="outline"
                               isDisabled={isProcessing || isFlagged}
                               onPress={() => onFlagTransaction?.(txn)}
-                              className="gap-1.5 font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400"
+                              className="h-8 gap-1.5 font-medium text-xs rounded-xl text-rose-600 hover:text-rose-700 dark:text-rose-400"
                             >
                               <Flag className="h-3.5 w-3.5" />
                               <span>{isFlagged ? "Flagged" : "Flag"}</span>
@@ -287,7 +313,7 @@ export default function TransactionsTable({
                               variant="outline"
                               isDisabled={isProcessing}
                               onPress={() => onApproveTransaction?.(txn)}
-                              className="gap-1.5 font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                              className="h-8 gap-1.5 font-medium text-xs rounded-xl text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
                               <span>Approve</span>
@@ -317,7 +343,7 @@ export default function TransactionsTable({
               variant="outline"
               isDisabled={page <= 1}
               onPress={() => onPageChange(page - 1)}
-              className="gap-1 font-medium"
+              className="h-8 gap-1 font-medium rounded-xl border-border/70"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               <span>Previous</span>
@@ -327,7 +353,7 @@ export default function TransactionsTable({
               variant="outline"
               isDisabled={page >= totalPages}
               onPress={() => onPageChange(page + 1)}
-              className="gap-1 font-medium"
+              className="h-8 gap-1 font-medium rounded-xl border-border/70"
             >
               <span>Next</span>
               <ChevronRight className="h-3.5 w-3.5" />
