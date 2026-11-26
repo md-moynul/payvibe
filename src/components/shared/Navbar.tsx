@@ -74,7 +74,7 @@ export default function Navbar() {
 
     return [
       { label: "Dashboard", href: "/dashboard/customer" },
-      { label: "Accounts", href: "/dashboard/customer/accounts" },
+      { label: "Account", href: "/dashboard/customer/account" },
       { label: "Transfers", href: "/dashboard/customer/transfers" },
       { label: "Transactions", href: "/dashboard/customer/transactions" },
       { label: "Loans", href: "/dashboard/customer/loans" },
