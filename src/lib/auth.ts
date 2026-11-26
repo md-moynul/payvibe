@@ -83,6 +83,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        if (user.email) {
+          token.email = String(user.email).trim().toLowerCase();
+        }
       }
       return token;
     },
@@ -90,6 +93,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = String(token.id ?? "");
         session.user.role = (token.role as UserRole) ?? ("customer" as UserRole);
+        if (token.email) {
+          session.user.email = String(token.email).trim().toLowerCase();
+        }
       }
       return session;
     },

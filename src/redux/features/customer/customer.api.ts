@@ -4,7 +4,14 @@ import {
   IRegisterCustomerPayload,
   IRegisterCustomerResponse,
 } from "@/types/account.type";
-import { IUpdateCustomerKycPayload, IUpdateCustomerKycResponse } from "@/types/auth.type";
+import {
+  IUpdateCustomerKycPayload,
+  IUpdateCustomerKycResponse,
+} from "@/types/auth.type";
+import type {
+  IUpdateCustomerStatusPayload,
+  IUpdateCustomerStatusResponse,
+} from "@/types/customer.type";
 
 export const customerApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -34,6 +41,17 @@ export const customerApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["customers"],
     }),
+    updateCustomerStatus: builder.mutation<
+      IUpdateCustomerStatusResponse,
+      IUpdateCustomerStatusPayload
+    >({
+      query: ({ id, status }) => ({
+        url: `/customers/${id}`,
+        method: "PATCH",
+        body: { status },
+      }),
+      invalidatesTags: ["customers"],
+    }),
   }),
 });
 
@@ -41,4 +59,5 @@ export const {
   useGetCustomersQuery,
   useRegisterCustomerMutation,
   useUpdateCustomerKycMutation,
+  useUpdateCustomerStatusMutation,
 } = customerApi;

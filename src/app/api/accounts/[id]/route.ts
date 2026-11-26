@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import { auth } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import type {
   IAccount,
   TAccountStatus,
   TAccountType,
 } from "@/types/account.type";
-import { checkRole } from "@/lib/checkRole";
+import { checkRole, isStaffOrAdmin } from "@/lib/checkRole";
 
 // TODO: Add audit log / activity tracking when account limits or Frozen status are updated
 
@@ -41,8 +42,13 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const roleCheck = await checkRole();
-    if (!roleCheck.ok) return roleCheck.response;
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Please sign in first." },
+        { status: 401 },
+      );
+    }
 
     const { id } = await context.params;
     const rawId = decodeURIComponent(id ?? "").trim();
@@ -64,6 +70,39 @@ export async function GET(
         { success: false, message: "Bank account not found." },
         { status: 404 },
       );
+    }
+
+    // Strict ownership verification for customers / non-staff users
+    if (!isStaffOrAdmin(session.user.role)) {
+      const userId = String(session.user.id ?? "").trim();
+      const userEmail = String(session.user.email ?? "")
+        .trim()
+        .toLowerCase();
+
+      const docCustomerId = String(accountDoc.customerId ?? "").trim();
+      const docOwnerId = String(accountDoc.ownerId ?? "").trim();
+      const docOwnerEmail = String(accountDoc.ownerEmail ?? "")
+        .trim()
+        .toLowerCase();
+      const docCustomerEmail = String(accountDoc.customerEmail ?? "")
+        .trim()
+        .toLowerCase();
+
+      const isOwner =
+        (userId && (docCustomerId === userId || docOwnerId === userId)) ||
+        (userEmail &&
+          (docOwnerEmail === userEmail || docCustomerEmail === userEmail));
+
+      if (!isOwner) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Forbidden: You do not have permission to access this bank account.",
+          },
+          { status: 403 },
+        );
+      }
     }
 
     // TODO: Fetch owner details from users collection if ownerEmail/ownerPhone is needed on details page

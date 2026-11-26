@@ -39,20 +39,44 @@ export async function GET() {
     const filter: Record<string, unknown> = {};
 
     if (!isStaffOrAdmin(session.user.role)) {
-      const userId = session.user.id;
-      const userEmail = session.user.email?.toLowerCase();
+      const userId = String(session.user.id ?? "").trim();
+      const userEmail = String(session.user.email ?? "")
+        .trim()
+        .toLowerCase();
 
-      if (userId && userEmail) {
-        filter.$or = [
-          { customerId: userId },
-          { ownerId: userId },
-          { ownerEmail: userEmail },
-        ];
-      } else if (userId) {
-        filter.$or = [{ customerId: userId }, { ownerId: userId }];
-      } else if (userEmail) {
-        filter.ownerEmail = userEmail;
+      // If customer has neither user ID nor email on session, fail-closed safely with empty array
+      if (!userId && !userEmail) {
+        return NextResponse.json(
+          {
+            success: true,
+            message: "No accounts found.",
+            data: [],
+          },
+          { status: 200 },
+        );
       }
+
+      const ownerConditions: Record<string, unknown>[] = [];
+
+      if (userId) {
+        ownerConditions.push({ customerId: userId }, { ownerId: userId });
+        if (ObjectId.isValid(userId)) {
+          const userObjId = new ObjectId(userId);
+          ownerConditions.push(
+            { customerId: userObjId },
+            { ownerId: userObjId },
+          );
+        }
+      }
+
+      if (userEmail) {
+        ownerConditions.push(
+          { ownerEmail: userEmail },
+          { customerEmail: userEmail },
+        );
+      }
+
+      filter.$or = ownerConditions;
     }
 
     const docs = await db
