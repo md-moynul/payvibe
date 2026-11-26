@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, Button, Chip, CloseIcon } from "@heroui/react";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import {
@@ -11,7 +12,6 @@ import {
   selectUserRole,
 } from "@/redux/features/auth";
 import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -47,6 +47,7 @@ export default function Navbar() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const role = useAppSelector(selectUserRole);
   const router = useRouter();
+  const pathname = usePathname();
 
   const roleNavLinks = React.useMemo(() => {
     if (!isAuthenticated) {
@@ -59,6 +60,8 @@ export default function Navbar() {
         { label: "Customers", href: "/dashboard/admin/customers" },
         { label: "Accounts", href: "/dashboard/admin/accounts" },
         { label: "Staff", href: "/dashboard/admin/staff" },
+        { label: "Transactions", href: "/dashboard/admin/transactions" },
+        { label: "Requests", href: "/dashboard/admin/requests" },
         { label: "Loans", href: "/dashboard/admin/loans" },
       ];
     }
@@ -68,18 +71,32 @@ export default function Navbar() {
         { label: "Dashboard", href: "/dashboard/staff" },
         { label: "Customers", href: "/dashboard/staff/customers" },
         { label: "Transactions", href: "/dashboard/staff/transactions" },
+        { label: "Requests", href: "/dashboard/staff/requests" },
         { label: "Loans", href: "/dashboard/staff/loans" },
       ];
     }
 
     return [
       { label: "Dashboard", href: "/dashboard/customer" },
-      { label: "Account", href: "/dashboard/customer/account" },
+      { label: "Accounts", href: "/dashboard/customer/account" },
       { label: "Transfers", href: "/dashboard/customer/transfers" },
       { label: "Transactions", href: "/dashboard/customer/transactions" },
+      { label: "Deposit & Withdraw", href: "/dashboard/customer/deposits-withdrawals" },
       { label: "Loans", href: "/dashboard/customer/loans" },
     ];
   }, [isAuthenticated, role]);
+
+  const isLinkActive = (href: string) => {
+    if (
+      href === "/dashboard/admin" ||
+      href === "/dashboard/staff" ||
+      href === "/dashboard/customer" ||
+      href === "/"
+    ) {
+      return pathname === href;
+    }
+    return pathname.startsWith(href);
+  };
 
   const handleAuthAction = async () => {
     if (isAuthenticated) {
@@ -95,18 +112,18 @@ export default function Navbar() {
   const roleBadgeColor = getRoleBadgeColor(role);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/85 backdrop-blur-md">
       <nav
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
         aria-label="Main Navigation"
       >
         {/* Left: Mobile Menu Toggle + Brand */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <Button
             isIconOnly
             variant="ghost"
             size="sm"
-            className="sm:hidden"
+            className="lg:hidden"
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             onPress={() => setIsMenuOpen(!isMenuOpen)}
           >
@@ -121,23 +138,30 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center: Desktop Navigation Links */}
-        <div className="hidden sm:flex items-center gap-6">
-          {roleNavLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
-              {item.label}
-            </Link>
-          ))}
+        {/* Center: Desktop Navigation Links with Active Pill Highlights */}
+        <div className="hidden lg:flex items-center gap-1 overflow-x-auto">
+          {roleNavLinks.map((item) => {
+            const active = isLinkActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 whitespace-nowrap ${
+                  active
+                    ? "bg-blue-500 text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Right: User Profile & Auth Action Area */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0">
           {isAuthenticated && user && (
-            <div className="hidden md:flex items-center gap-3 rounded-full border border-border/80 bg-default-100/60 dark:bg-default-50/10 px-3 py-1.5 shadow-xs transition-all hover:bg-default-100/90 hover:border-border">
+            <div className="hidden sm:flex items-center gap-2.5 rounded-full border border-border/80 bg-default-100/60 dark:bg-default-50/10 px-3 py-1.5 shadow-2xs transition-all hover:bg-default-100/90 hover:border-border">
               <Avatar
                 size="sm"
                 color={roleBadgeColor}
@@ -150,11 +174,11 @@ export default function Navbar() {
               </Avatar>
 
               <div className="flex flex-col text-left">
-                <span className="text-xs font-semibold text-foreground leading-tight max-w-30 truncate">
+                <span className="text-xs font-semibold text-foreground leading-tight max-w-28 truncate">
                   {user.name || user.email?.split("@")[0]}
                 </span>
                 {user.email && (
-                  <span className="text-[10px] text-muted-foreground leading-tight max-w-30 truncate">
+                  <span className="text-[10px] text-muted-foreground leading-tight max-w-28 truncate">
                     {user.email}
                   </span>
                 )}
@@ -175,7 +199,7 @@ export default function Navbar() {
             size="sm"
             variant={isAuthenticated ? "outline" : "primary"}
             onPress={handleAuthAction}
-            className="font-medium rounded-full px-4"
+            className="font-medium rounded-full px-4 text-xs h-9 cursor-pointer"
           >
             {isAuthenticated ? "Sign Out" : "Sign In"}
           </Button>
@@ -184,10 +208,10 @@ export default function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {isMenuOpen && (
-        <div className="sm:hidden border-t border-border bg-background px-4 py-4 flex flex-col gap-3">
+        <div className="lg:hidden border-t border-border bg-background px-4 py-4 flex flex-col gap-3 max-h-[calc(100vh-4rem)] overflow-y-auto">
           {/* User Profile Card on Mobile */}
           {isAuthenticated && user && (
-            <div className="flex items-center justify-between p-3 rounded-xl border border-border/80 bg-default-100/60 dark:bg-default-50/10">
+            <div className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-default-100/60 dark:bg-default-50/10">
               <div className="flex items-center gap-3">
                 <Avatar
                   size="md"
@@ -203,7 +227,7 @@ export default function Navbar() {
                   <span className="text-sm font-semibold text-foreground">
                     {user.name || user.email?.split("@")[0]}
                   </span>
-                  <span className="text-xs text-muted-foreground truncate max-w-42.5">
+                  <span className="text-xs text-muted-foreground truncate max-w-44">
                     {user.email}
                   </span>
                 </div>
@@ -221,16 +245,23 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="flex flex-col gap-1">
-            {roleNavLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="w-full py-2 px-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-default-100 hover:text-primary transition-colors block"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {roleNavLinks.map((item) => {
+              const active = isLinkActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`w-full py-2 px-3 rounded-xl text-sm font-medium transition-colors block ${
+                    active
+                      ? "bg-blue-500 text-white font-semibold shadow-xs"
+                      : "text-foreground hover:bg-muted/50"
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
