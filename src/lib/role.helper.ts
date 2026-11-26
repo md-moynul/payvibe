@@ -49,13 +49,13 @@ export interface IRouteAccessDecision {
 /**
  * Evaluates whether a role is authorized to access a given URL pathname.
  * Implements strict role separation:
- * 1. Customer cannot access /dashboard/admin* or /dashboard/staff*
- * 2. Admin cannot access /dashboard/customer* or /dashboard/staff*
- * 3. Bank-staff cannot access /dashboard/admin* or /dashboard/customer*
+ * 1. Customer cannot access /dashboard/admin* or /dashboard/staff* -> redirected to /unauthorized
+ * 2. Admin cannot access /dashboard/customer* or /dashboard/staff* -> redirected to /unauthorized
+ * 3. Bank-staff cannot access /dashboard/admin* or /dashboard/customer* -> redirected to /unauthorized
  * 4. Guest is redirected to /login with callbackUrl
  * 5. Authenticated users on /login or /register are redirected to their dashboard home
  * 6. Root /dashboard is redirected to role-specific dashboard home
- * 7. Redirects are guaranteed loop-free because target is always within allowed role paths.
+ * 7. /unauthorized is universally allowed to prevent loops
  */
 export function evaluateRouteAccess(
   rawRole: string | null | undefined,
@@ -70,7 +70,17 @@ export function evaluateRouteAccess(
       ? pathname.slice(0, -1)
       : pathname;
 
-  // Unauthenticated / Guest
+  // The unauthorized page is universally accessible to avoid redirect loops
+  if (normalizedPath === "/unauthorized") {
+    return { allowed: true };
+  }
+
+  // Dashboard unauthorized subroute cleanly redirects to root /unauthorized
+  if (normalizedPath === "/dashboard/unauthorized") {
+    return { allowed: false, redirectPath: "/unauthorized" };
+  }
+
+  // Unauthenticated / Guest trying to access protected routes
   if (role === "guest") {
     if (normalizedPath.startsWith("/dashboard")) {
       return {
@@ -91,13 +101,16 @@ export function evaluateRouteAccess(
     return { allowed: false, redirectPath: home };
   }
 
+  // Helper for unauthorized redirect with origin path
+  const unauthorizedRedirect = `/unauthorized?from=${encodeURIComponent(pathname)}`;
+
   // Admin routes (/dashboard/admin, /dashboard/admin/*)
   if (
     normalizedPath === "/dashboard/admin" ||
     normalizedPath.startsWith("/dashboard/admin/")
   ) {
     if (role === "admin") return { allowed: true };
-    return { allowed: false, redirectPath: home };
+    return { allowed: false, redirectPath: unauthorizedRedirect };
   }
 
   // Staff routes (/dashboard/staff, /dashboard/staff/*)
@@ -106,7 +119,7 @@ export function evaluateRouteAccess(
     normalizedPath.startsWith("/dashboard/staff/")
   ) {
     if (role === "bank-staff") return { allowed: true };
-    return { allowed: false, redirectPath: home };
+    return { allowed: false, redirectPath: unauthorizedRedirect };
   }
 
   // Customer routes (/dashboard/customer, /dashboard/customer/*)
@@ -115,7 +128,7 @@ export function evaluateRouteAccess(
     normalizedPath.startsWith("/dashboard/customer/")
   ) {
     if (role === "customer") return { allowed: true };
-    return { allowed: false, redirectPath: home };
+    return { allowed: false, redirectPath: unauthorizedRedirect };
   }
 
   // Common loan review routes (/dashboard/loans, /dashboard/loans/*)
@@ -127,8 +140,7 @@ export function evaluateRouteAccess(
     if (role === "admin" || role === "bank-staff") {
       return { allowed: true };
     }
-    // For customers, redirect to their customer loan portal
-    return { allowed: false, redirectPath: "/dashboard/customer/loans" };
+    return { allowed: false, redirectPath: unauthorizedRedirect };
   }
 
   return { allowed: true };
