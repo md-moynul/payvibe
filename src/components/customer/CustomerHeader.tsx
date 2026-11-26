@@ -1,51 +1,44 @@
 "use client";
 
 import React from "react";
-import { Button } from "@heroui/react";
-import { Search, UserPlus } from "lucide-react";
-
-// TODO: Add debounced search or status/verification filter dropdown if needed
+import { Button, Chip } from "@heroui/react";
+import { UserPlus } from "lucide-react";
 
 interface ICustomerHeaderProps {
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
   onOpenRegisterModal: () => void;
+  portalBadge?: string;
+  searchQuery?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export default function CustomerHeader({
-  searchQuery,
-  onSearchChange,
   onOpenRegisterModal,
+  portalBadge,
 }: ICustomerHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Customer Management
-        </h1>
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Customer Management
+          </h1>
+          {portalBadge && (
+            <Chip size="sm" variant="soft" color="accent">
+              {portalBadge}
+            </Chip>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">
           Search customers, verify profiles, and register new customer accounts.
         </p>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search by name, email, or phone..."
-            className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-primary sm:w-64"
-          />
-        </div>
-
-        {/* TODO: Restrict or label Register Customer action based on Admin / Bank Staff permissions */}
+      <div className="flex items-center gap-2.5">
         <Button
           type="button"
           variant="primary"
           onPress={onOpenRegisterModal}
-          className="font-medium gap-2"
+          className="font-medium gap-2 shadow-sm"
         >
           <UserPlus className="h-4 w-4" />
           <span>Register Customer</span>

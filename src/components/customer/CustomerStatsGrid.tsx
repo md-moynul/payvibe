@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Card } from "@heroui/react";
+import { Card, CardContent } from "@heroui/react";
 import { Users, UserCheck, ShieldAlert, Wallet } from "lucide-react";
 
 // TODO: Move IDummyCustomer / ICustomer interface to a shared types file (e.g., @/types/customer.type)
@@ -24,12 +24,11 @@ interface ICustomerStatsGridProps {
 export default function CustomerStatsGrid({
   customers,
 }: ICustomerStatsGridProps) {
-  // TODO: Replace client-side dummy calculations with live backend summary / Redux selector data when wired
   const totalCustomers = customers.length;
-  const activeCustomers = customers.filter((c) => c.status === "Active").length;
-  const flaggedOrInactive = customers.filter(
-    (c) => c.status !== "Active",
+  const activeCustomers = customers.filter(
+    (c) => c.status === "Active" && c.kycVerified,
   ).length;
+  const pendingKycCount = customers.filter((c) => !c.kycVerified).length;
   const combinedBalance = customers.reduce(
     (sum, item) => sum + item.totalBalance,
     0,
@@ -46,52 +45,56 @@ export default function CustomerStatsGrid({
     {
       label: "Active Customers",
       value: activeCustomers.toString(),
-      subtext: "Verified & eligible for banking",
+      subtext: "Verified & banking active",
       icon: UserCheck,
       badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     },
     {
-      label: "Needs Review",
-      value: flaggedOrInactive.toString(),
-      subtext: "Inactive or flagged profiles",
+      label: "Pending KYC",
+      value: pendingKycCount.toString(),
+      subtext:
+        pendingKycCount === 1
+          ? "1 profile needs review"
+          : `${pendingKycCount} profiles need review`,
       icon: ShieldAlert,
       badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     },
     {
       label: "Combined Balance",
       value: `৳${combinedBalance.toLocaleString("en-BD")}`,
-      subtext: "Across customer bank accounts",
+      subtext: "Across customer accounts",
       icon: Wallet,
-      badgeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+      badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((item) => {
         const Icon = item.icon;
         return (
           <Card
             key={item.label}
-            className="p-5 border border-border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/40 rounded-2xl flex flex-col justify-between"
+            className="rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md"
           >
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {item.label}
-              </span>
-              <div className={`rounded-xl p-2.5 ${item.badgeClass} shrink-0`}>
+            <CardContent className="flex flex-row items-center gap-3.5 p-0">
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${item.badgeClass}`}
+              >
                 <Icon className="h-5 w-5" />
               </div>
-            </div>
-
-            <div className="mt-3">
-              <p className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {item.value}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {item.subtext}
-              </p>
-            </div>
+              <div className="min-w-0 flex-1">
+                <span className="block text-xs font-medium text-muted-foreground truncate">
+                  {item.label}
+                </span>
+                <span className="block text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
+                  {item.value}
+                </span>
+                <span className="block text-[11px] text-muted-foreground/80 truncate">
+                  {item.subtext}
+                </span>
+              </div>
+            </CardContent>
           </Card>
         );
       })}
