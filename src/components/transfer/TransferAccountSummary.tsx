@@ -44,8 +44,8 @@ export default function TransferAccountSummary({
             </p>
           </div>
 
-          <div className="rounded-xl bg-muted/40 p-3 space-y-1.5 text-xs">
-            <div className="flex justify-between text-muted-foreground">
+          <div className="space-y-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/5">
+            <div className="flex justify-between text-slate-600 dark:text-slate-300">
               <span>Daily Transfer Limit</span>
               <span className="font-semibold text-foreground">
                 ৳
@@ -54,7 +54,7 @@ export default function TransferAccountSummary({
                 )}
               </span>
             </div>
-            <div className="flex justify-between text-muted-foreground">
+            <div className="flex justify-between text-slate-600 dark:text-slate-300">
               <span>Max Single Txn</span>
               <span className="font-semibold text-foreground">
                 ৳
@@ -63,7 +63,7 @@ export default function TransferAccountSummary({
                 ).toLocaleString("en-BD")}
               </span>
             </div>
-            <div className="flex justify-between text-muted-foreground">
+            <div className="flex justify-between text-slate-600 dark:text-slate-300">
               <span>Min Required Balance</span>
               <span className="font-semibold text-foreground">
                 ৳
