@@ -27,6 +27,8 @@ const KYC_STATUSES = [
 
 const ACCOUNT_STATUSES = [
   { label: "All Accounts", value: "ALL" },
+  { label: "Frozen Accounts", value: "FROZEN_ACCOUNT" },
+  { label: "Active Accounts", value: "ACTIVE_ACCOUNT" },
   { label: "Has Bank Account", value: "HAS_ACCOUNT" },
   { label: "No Account Yet", value: "NO_ACCOUNT" },
 ];
@@ -34,6 +36,7 @@ const ACCOUNT_STATUSES = [
 const CUSTOMER_STATUSES = [
   { label: "All Statuses", value: "ALL" },
   { label: "Active", value: "Active" },
+  { label: "Account Frozen", value: "FROZEN" },
   { label: "Inactive", value: "Inactive" },
   { label: "Flagged", value: "Flagged" },
 ];

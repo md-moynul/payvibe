@@ -20,9 +20,13 @@ import {
   Pencil,
   Snowflake,
   ShieldCheck,
+  UserCheck,
+  UserX,
+  Flag,
 } from "lucide-react";
 import type { IDummyCustomer } from "./CustomerStatsGrid";
 import type { TAccountStatus } from "@/types/account.type";
+import type { TCustomerStatus } from "@/types/customer.type";
 
 export interface ICustomerWithAccount extends IDummyCustomer {
   accountId?: string;
@@ -33,20 +37,29 @@ interface ICustomersTableProps {
   customers: ICustomerWithAccount[];
   canApproveKyc?: boolean;
   isUpdatingKyc?: boolean;
+  canUpdateCustomerStatus?: boolean;
+  isUpdatingStatus?: boolean;
   onQuickCreateAccount?: (customer: ICustomerWithAccount) => void;
   onEditAccount?: (customer: ICustomerWithAccount) => void;
   onFreezeAccount?: (customer: ICustomerWithAccount) => void;
   onApproveKyc?: (customer: ICustomerWithAccount) => void;
+  onUpdateCustomerStatus?: (
+    customer: ICustomerWithAccount,
+    status: TCustomerStatus,
+  ) => void;
 }
 
 export default function CustomersTable({
   customers,
   canApproveKyc = false,
   isUpdatingKyc = false,
+  canUpdateCustomerStatus = false,
+  isUpdatingStatus = false,
   onQuickCreateAccount,
   onEditAccount,
   onFreezeAccount,
   onApproveKyc,
+  onUpdateCustomerStatus,
 }: ICustomersTableProps) {
   const router = useRouter();
 
@@ -142,20 +155,28 @@ export default function CustomersTable({
                   </td>
 
                   <td className="px-5 py-4">
-                    <Chip
-                      size="sm"
-                      variant="soft"
-                      color={
-                        customer.status === "Active"
-                          ? "success"
-                          : customer.status === "Flagged"
-                            ? "danger"
-                            : "default"
-                      }
-                      className="font-medium"
-                    >
-                      {customer.status}
-                    </Chip>
+                    <div className="flex flex-col gap-1 items-start">
+                      <Chip
+                        size="sm"
+                        variant="soft"
+                        color={
+                          customer.status === "Active"
+                            ? "success"
+                            : customer.status === "Flagged"
+                              ? "danger"
+                              : "default"
+                        }
+                        className="font-medium"
+                      >
+                        {customer.status}
+                      </Chip>
+                      {isFrozen && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                          <Snowflake className="h-2.5 w-2.5" />
+                          Account Frozen
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   <td className="px-5 py-4 text-right">
@@ -172,6 +193,54 @@ export default function CustomersTable({
                           <span>Approve KYC</span>
                         </Button>
                       )}
+
+                      {canUpdateCustomerStatus && customer.status !== "Active" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          isDisabled={isUpdatingStatus}
+                          onPress={() =>
+                            onUpdateCustomerStatus?.(customer, "Active")
+                          }
+                          className="gap-1.5 font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                        >
+                          <UserCheck className="h-3.5 w-3.5" />
+                          <span>Activate</span>
+                        </Button>
+                      )}
+
+                      {canUpdateCustomerStatus &&
+                        customer.status !== "Inactive" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={isUpdatingStatus}
+                            onPress={() =>
+                              onUpdateCustomerStatus?.(customer, "Inactive")
+                            }
+                            className="gap-1.5 font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400"
+                          >
+                            <UserX className="h-3.5 w-3.5" />
+                            <span>Deactivate</span>
+                          </Button>
+                        )}
+
+                      {canUpdateCustomerStatus &&
+                        customer.status !== "Flagged" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={isUpdatingStatus}
+                            onPress={() =>
+                              onUpdateCustomerStatus?.(customer, "Flagged")
+                            }
+                            className="gap-1.5 font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400"
+                          >
+                            <Flag className="h-3.5 w-3.5" />
+                            <span>Flag</span>
+                          </Button>
+                        )}
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -181,6 +250,7 @@ export default function CustomersTable({
                         <Eye className="h-3.5 w-3.5" />
                         <span>View Details</span>
                       </Button>
+
                       {hasBankAccount ? (
                         <>
                           <Button
@@ -196,12 +266,12 @@ export default function CustomersTable({
                           <Button
                             size="sm"
                             variant="outline"
-                            isDisabled={isFrozen}
+                            isDisabled={isUpdatingStatus}
                             onPress={() => onFreezeAccount?.(customer)}
                             className="gap-1.5 font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400"
                           >
                             <Snowflake className="h-3.5 w-3.5" />
-                            <span>{isFrozen ? "Frozen" : "Freeze"}</span>
+                            <span>{isFrozen ? "Unfreeze" : "Freeze"}</span>
                           </Button>
                         </>
                       ) : (

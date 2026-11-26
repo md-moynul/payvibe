@@ -14,11 +14,14 @@ import FreezeAccountModal from "@/components/account/FreezeAccountModal";
 import {
   useGetCustomersQuery,
   useUpdateCustomerKycMutation,
+  useUpdateCustomerStatusMutation,
 } from "@/redux/features/customer";
+import { useUpdateAccountStatusMutation } from "@/redux/features/account";
 import { useAppSelector } from "@/redux/hook";
 import { selectUserRole } from "@/redux/features/auth";
 import { getRoleAccess } from "@/lib/role.helper";
 import type { IAccount } from "@/types/account.type";
+import type { TCustomerStatus } from "@/types/customer.type";
 import {
   Card,
   Spinner,
@@ -50,10 +53,17 @@ export default function CustomersWorkspace() {
 
   const rawRole = useAppSelector(selectUserRole);
   const { canApproveKyc } = getRoleAccess(rawRole);
+  const canUpdateCustomerStatus = rawRole?.toLowerCase() === "admin";
 
   const { data, isLoading, isError, refetch } = useGetCustomersQuery();
   const [updateCustomerKyc, { isLoading: isUpdatingKyc }] =
     useUpdateCustomerKycMutation();
+  const [updateCustomerStatus, { isLoading: isUpdatingStatus }] =
+    useUpdateCustomerStatusMutation();
+  const [updateAccountStatus, { isLoading: isUpdatingAccountStatus }] =
+    useUpdateAccountStatusMutation();
+
+  const isBusy = isUpdatingStatus || isUpdatingAccountStatus;
 
   const customers = useMemo<ICustomerWithAccount[]>(
     () => (data?.data ?? []) as ICustomerWithAccount[],
@@ -63,8 +73,13 @@ export default function CustomersWorkspace() {
   const filteredCustomers = useMemo(() => {
     const list = customers.filter((item) => {
       // Status Filter
-      if (statusFilter !== "ALL" && item.status !== statusFilter) {
-        return false;
+      if (statusFilter !== "ALL") {
+        if (statusFilter === "FROZEN") {
+          const isFrozen = item.accountStatus === "Frozen";
+          if (!isFrozen) return false;
+        } else if (item.status !== statusFilter) {
+          return false;
+        }
       }
 
       // KYC Verification Filter
@@ -76,12 +91,24 @@ export default function CustomersWorkspace() {
       }
 
       // Account Status Filter
-      const hasAccount =
-        item.accountsCount > 0 || Boolean(item.accountId);
+      const hasAccount = item.accountsCount > 0 || Boolean(item.accountId);
+      const isAccountFrozen = item.accountStatus === "Frozen";
       if (accountFilter === "HAS_ACCOUNT" && !hasAccount) {
         return false;
       }
       if (accountFilter === "NO_ACCOUNT" && hasAccount) {
+        return false;
+      }
+      if (
+        accountFilter === "FROZEN_ACCOUNT" &&
+        (!hasAccount || !isAccountFrozen)
+      ) {
+        return false;
+      }
+      if (
+        accountFilter === "ACTIVE_ACCOUNT" &&
+        (!hasAccount || isAccountFrozen)
+      ) {
         return false;
       }
 
@@ -161,7 +188,29 @@ export default function CustomersWorkspace() {
     setIsAccountModalOpen(true);
   };
 
-  const handleFreezeAccount = (customer: ICustomerWithAccount) => {
+  const handleFreezeAccount = async (customer: ICustomerWithAccount) => {
+    if (isBusy) return;
+
+    if (customer.accountStatus === "Frozen") {
+      const targetAccountId = customer.accountId || customer.id;
+      if (!targetAccountId) return;
+
+      try {
+        await updateAccountStatus({
+          id: targetAccountId,
+          status: "Active",
+          reason: "Account unfrozen by admin/staff",
+        }).unwrap();
+
+        toast.success(`Account unfrozen for ${customer.name}`);
+        refetch();
+      } catch (error) {
+        console.error("Failed to unfreeze account:", error);
+        toast.danger("Failed to unfreeze account");
+      }
+      return;
+    }
+
     setFreezingCustomer(customer);
     setIsFreezeModalOpen(true);
   };
@@ -175,12 +224,32 @@ export default function CustomersWorkspace() {
         kycVerified: true,
       }).unwrap();
 
-      toast.success(
-        response.message || `KYC approved for ${customer.name}`,
-      );
+      toast.success(response.message || `KYC approved for ${customer.name}`);
     } catch (error) {
       console.error("Failed to approve customer KYC:", error);
       toast.danger("Failed to approve customer KYC");
+    }
+  };
+
+  const handleUpdateCustomerStatus = async (
+    customer: ICustomerWithAccount,
+    status: TCustomerStatus,
+  ) => {
+    if (!canUpdateCustomerStatus || isBusy) return;
+    if (customer.status === status) return;
+
+    try {
+      const response = await updateCustomerStatus({
+        id: customer.id,
+        status,
+      }).unwrap();
+
+      toast.success(
+        response.message || `${customer.name}'s status updated to ${status}`,
+      );
+    } catch (error) {
+      console.error("Failed to update customer status:", error);
+      toast.danger("Failed to update customer status");
     }
   };
 
@@ -243,7 +312,7 @@ export default function CustomersWorkspace() {
 
       {/* Customers Table / Status Views */}
       {isLoading ? (
-        <Card className="rounded-2xl border border-border bg-card p-10 text-center flex flex-col items-center justify-center gap-3">
+        <Card className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-10 text-center">
           <Spinner size="md" color="accent" />
           <span className="text-sm text-muted-foreground">
             Loading customers...
@@ -264,10 +333,13 @@ export default function CustomersWorkspace() {
           customers={filteredCustomers}
           canApproveKyc={canApproveKyc}
           isUpdatingKyc={isUpdatingKyc}
+          canUpdateCustomerStatus={canUpdateCustomerStatus}
+          isUpdatingStatus={isBusy}
           onQuickCreateAccount={handleQuickCreateAccount}
           onEditAccount={handleEditAccount}
           onFreezeAccount={handleFreezeAccount}
           onApproveKyc={handleApproveKyc}
+          onUpdateCustomerStatus={handleUpdateCustomerStatus}
         />
       )}
 
