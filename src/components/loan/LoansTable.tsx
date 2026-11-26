@@ -1,7 +1,14 @@
 "use client";
 
 import React from "react";
-import { Button, Card, Chip } from "@heroui/react";
+import {
+  Button,
+  Card,
+  Chip,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@heroui/react";
 import {
   Landmark,
   FileText,
@@ -9,6 +16,7 @@ import {
   XCircle,
   UserSearch,
   CreditCard,
+  CalendarClock,
 } from "lucide-react";
 import type { ILoan, TLoanStatus } from "@/types/loan.type";
 
@@ -18,8 +26,10 @@ interface ILoansTableProps {
   canAssistLoan?: boolean;
   canDecideLoan?: boolean;
   canRepayLoan?: boolean;
+  isRepaymentWindowOpen?: boolean;
   isProcessing?: boolean;
   onViewUserInfo?: (loan: ILoan) => void;
+  onViewSchedule?: (loan: ILoan) => void;
   onReviewLoan?: (loan: ILoan) => void;
   onApproveLoan?: (loan: ILoan) => void;
   onRejectLoan?: (loan: ILoan) => void;
@@ -47,15 +57,21 @@ export default function LoansTable({
   canAssistLoan = false,
   canDecideLoan = false,
   canRepayLoan = false,
+  isRepaymentWindowOpen = true,
   isProcessing = false,
   onViewUserInfo,
+  onViewSchedule,
   onReviewLoan,
   onApproveLoan,
   onRejectLoan,
   onRepayLoan,
 }: ILoansTableProps) {
   const hasAnyAction =
-    Boolean(onViewUserInfo) || canAssistLoan || canDecideLoan || canRepayLoan;
+    Boolean(onViewUserInfo) ||
+    Boolean(onViewSchedule) ||
+    canAssistLoan ||
+    canDecideLoan ||
+    canRepayLoan;
 
   if (loans.length === 0) {
     return (
@@ -100,10 +116,32 @@ export default function LoansTable({
                 loan.status === "Rejected" ||
                 loan.status === "Completed";
 
+              const hasRemaining = Number(loan.remainingBalance ?? 0) > 0;
+              const isEligibleLoanStatus =
+                loan.status === "Active" || loan.status === "Approved";
+
               const canPayCurrentLoan =
                 canRepayLoan &&
-                (loan.status === "Active" || loan.status === "Approved") &&
-                Number(loan.remainingBalance ?? 0) > 0;
+                isRepaymentWindowOpen &&
+                isEligibleLoanStatus &&
+                hasRemaining;
+
+              const isPayDisabled = isProcessing || !canPayCurrentLoan;
+
+              const payDisabledReason = isProcessing
+                ? "Processing installment payment..."
+                : !hasRemaining || loan.status === "Completed"
+                  ? "This loan has no remaining balance."
+                  : !isEligibleLoanStatus
+                    ? `Cannot pay installment when loan status is "${loan.status}".`
+                    : !isRepaymentWindowOpen
+                      ? "Installments can only be paid between the 1st and 10th of each month."
+                      : "";
+
+              const canShowSchedule =
+                loan.status === "Approved" ||
+                loan.status === "Active" ||
+                loan.status === "Completed";
 
               return (
                 <tr key={loan.id} className="transition hover:bg-muted/30">
@@ -158,6 +196,18 @@ export default function LoansTable({
                   {hasAnyAction && (
                     <td className="px-5 py-4 text-right">
                       <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                        {onViewSchedule && canShowSchedule && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onPress={() => onViewSchedule(loan)}
+                            className="gap-1.5 font-medium"
+                          >
+                            <CalendarClock className="h-3.5 w-3.5" />
+                            <span>Schedule &amp; History</span>
+                          </Button>
+                        )}
+
                         {onViewUserInfo && (
                           <Button
                             size="sm"
@@ -209,18 +259,35 @@ export default function LoansTable({
                           </>
                         )}
 
-                        {canRepayLoan && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            isDisabled={isProcessing || !canPayCurrentLoan}
-                            onPress={() => onRepayLoan?.(loan)}
-                            className="gap-1.5 font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
-                          >
-                            <CreditCard className="h-3.5 w-3.5" />
-                            <span>Pay Installment</span>
-                          </Button>
-                        )}
+                        {canRepayLoan &&
+                          (isPayDisabled ? (
+                            <Tooltip delay={150}>
+                              <TooltipTrigger className="inline-flex">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  isDisabled
+                                  className="gap-1.5 font-medium text-emerald-600 dark:text-emerald-400"
+                                >
+                                  <CreditCard className="h-3.5 w-3.5" />
+                                  <span>Pay Installment</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs px-2.5 py-1.5 text-xs">
+                                {payDisabledReason}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onPress={() => onRepayLoan?.(loan)}
+                              className="gap-1.5 font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                            >
+                              <CreditCard className="h-3.5 w-3.5" />
+                              <span>Pay Installment</span>
+                            </Button>
+                          ))}
                       </div>
                     </td>
                   )}

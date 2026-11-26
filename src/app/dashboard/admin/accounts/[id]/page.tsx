@@ -129,9 +129,9 @@ export default function AdminAccountDetailsPage() {
           <Button
             size="sm"
             variant="outline"
-            onPress={() => router.push("/dashboard/admin/customers")}
+            onPress={() => router.push("/dashboard/admin/accounts")}
           >
-            Back to Customers
+            Back to Accounts
           </Button>
           <Button size="sm" variant="ghost" onPress={() => refetch()}>
             Retry
@@ -152,8 +152,8 @@ export default function AdminAccountDetailsPage() {
             isIconOnly
             size="sm"
             variant="outline"
-            aria-label="Back to customers"
-            onPress={() => router.push("/dashboard/admin/customers")}
+            aria-label="Back to accounts"
+            onPress={() => router.push("/dashboard/admin/accounts")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>

@@ -13,6 +13,11 @@ export interface IAccount {
   currency?: string;
   ownerId?: string;
   ownerName?: string;
+  ownerEmail?: string;
+  customerId?: string;
+  customerName?: string;
+  customerEmail?: string;
+  isPrimary?: boolean;
   dailyLimit?: number;
   maxSingleTransaction?: number;
   minBalance?: number;

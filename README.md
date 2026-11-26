@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PayVibe — Digital Banking Management System
 
-## Getting Started
+A modular, role-based digital banking management dashboard built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, **HeroUI**, **Redux Toolkit**, **RTK Query**, **Auth.js / NextAuth**, and **MongoDB**. Designed to support administrative control, bank staff operations, and customer banking workflows with strict server-side authorization and transaction integrity.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Project Overview
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+PayVibe provides a multi-role banking workspace where:
+- **Administrators** oversee bank liquidity, customer profiles, KYC approvals, bank accounts, limits/freeze states, staff accounts, loan approvals/disbursements, and analytics charts.
+- **Bank Staff** assist with customer onboarding/accounts, review deposit/withdrawal requests, inspect/flag transactions, and review/forward loan applications with internal notes.
+- **Customers** manage their accounts, submit deposit/withdrawal requests, transfer funds, view transaction history, apply for loans, and pay monthly installments within the permitted repayment window.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Application Features
 
-## Learn More
+- **Role-Based Dashboards & Navigation:** Dedicated views for Admin (`/dashboard/admin`), Bank Staff (`/dashboard/staff`), and Customer (`/dashboard/customer`).
+- **Customer & Account Administration:** Customer registration, KYC verification, customer status updates (`Active`, `Inactive`, `Flagged`), bank account creation, account table view with dynamic details routing (`/accounts/[id]`), freeze/unfreeze controls, and transaction limit configuration.
+- **Transaction & Request Workflows:** Support for `Deposit`, `Withdrawal`, `Fund Transfer`, `Loan Disbursement`, and `Loan Repayment` transactions, plus deposit/withdrawal approval workflows.
+- **Loan Management & Repayment:** Loan application submission, staff review & internal notes, admin approval/rejection with disbursement recording, installment schedule & repayment history modal, and a monthly repayment window (1st–10th of each month).
+- **Data Visualization:** Interactive charts built with **Recharts** backed by real application data.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## User Roles & Permissions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Capability / Area | Admin | Bank Staff | Customer |
+| :--- | :---: | :---: | :---: |
+| Admin Dashboard & Analytics | Full Access | Restricted | Denied |
+| Staff Dashboard & Operations | Full Access | Full Access | Denied |
+| Customer Dashboard & Own Finances | Restricted | Restricted | Own Data Only |
+| Approve Customer KYC & Status | Yes | View / Assist Only | No |
+| Create / Freeze / Edit Account Limits | Yes | Freeze / Assist | No |
+| Manage Bank Staff Accounts | Yes | Denied | Denied |
+| Review / Flag Transactions | Yes | Yes | Own Transactions Only |
+| Review & Add Notes on Loans | Yes | Yes | No |
+| Approve / Reject & Disburse Loans | Yes | Denied | No |
+| Apply for Loans & Pay Installments | No | No | Own Loans Only |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Redux Toolkit Architecture
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+State management is organized modularly under `src/redux/` with separate feature folders and centralized store configuration:
+
+```text
+src/redux/
+├── store.ts
+├── rootReducer.ts
+├── hooks.ts
+├── provider.tsx
+├── baseApi.ts
+└── features/
+    ├── auth/
+    ├── account/
+    ├── customer/
+    ├── transaction/
+    ├── request/
+    └── loan/

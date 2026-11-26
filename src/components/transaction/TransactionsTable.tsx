@@ -160,7 +160,7 @@ export default function TransactionsTable({
                 return (
                   <tr key={txn.id} className="transition-colors hover:bg-muted/20">
                     {/* Txn ID */}
-                    <td className="px-5 py-4 whitespace-nowrap min-w-[155px]">
+                    <td className="px-5 py-4 whitespace-nowrap min-w-38.75">
                       <div className="whitespace-nowrap">
                         <span className="font-mono text-xs font-bold text-foreground tracking-tight whitespace-nowrap inline-block select-all">
                           {txn.transactionId}

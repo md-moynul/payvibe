@@ -3,6 +3,38 @@ import { ObjectId } from "mongodb";
 import { auth } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 
+const REPAYMENT_START_DAY = 1;
+const REPAYMENT_END_DAY = 10;
+
+function checkRepaymentWindow(now: Date = new Date()): {
+  isOpen: boolean;
+  message: string;
+} {
+  const dayOfMonth = now.getDate();
+  if (dayOfMonth >= REPAYMENT_START_DAY && dayOfMonth <= REPAYMENT_END_DAY) {
+    return {
+      isOpen: true,
+      message: "Repayment window is open.",
+    };
+  }
+
+  const nextWindowDate =
+    dayOfMonth < REPAYMENT_START_DAY
+      ? new Date(now.getFullYear(), now.getMonth(), REPAYMENT_START_DAY)
+      : new Date(now.getFullYear(), now.getMonth() + 1, REPAYMENT_START_DAY);
+
+  const formattedNextDate = nextWindowDate.toLocaleDateString("en-BD", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  return {
+    isOpen: false,
+    message: `Loan installments can only be paid between the ${REPAYMENT_START_DAY}st and ${REPAYMENT_END_DAY}th of each month. Next repayment window opens on ${formattedNextDate}.`,
+  };
+}
+
 function generateRepaymentTxnId(): string {
   const randomDigits = Math.floor(10000000 + Math.random() * 90000000);
   return `TXN-RP-${randomDigits}`;
@@ -18,6 +50,16 @@ export async function POST(
       return NextResponse.json(
         { success: false, message: "Unauthorized: Please sign in first." },
         { status: 401 },
+      );
+    }
+
+    // Enforce monthly installment payment window (1st - 10th of each month)
+    const now = new Date();
+    const repaymentWindow = checkRepaymentWindow(now);
+    if (!repaymentWindow.isOpen) {
+      return NextResponse.json(
+        { success: false, message: repaymentWindow.message },
+        { status: 400 },
       );
     }
 
@@ -112,7 +154,10 @@ export async function POST(
 
     const accountFilters: Record<string, unknown>[] = [];
     if (loanCustomerId) {
-      accountFilters.push({ customerId: loanCustomerId }, { ownerId: loanCustomerId });
+      accountFilters.push(
+        { customerId: loanCustomerId },
+        { ownerId: loanCustomerId },
+      );
     }
     if (loanCustomerEmail) {
       accountFilters.push({ ownerEmail: loanCustomerEmail });
@@ -161,7 +206,7 @@ export async function POST(
       Math.max(0, currentRemaining - payAmount).toFixed(2),
     );
     const nextLoanStatus = nextRemainingBalance <= 0 ? "Completed" : "Active";
-    const nowIso = new Date().toISOString();
+    const nowIso = now.toISOString();
     const transactionId = generateRepaymentTxnId();
 
     await db.collection("accounts").updateOne(

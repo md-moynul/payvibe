@@ -30,10 +30,10 @@ export default function CustomerAccountSwitcher({
               key={acc.id}
               type="button"
               onClick={() => onSelectAccount(acc.id)}
-              className={`rounded-2xl border p-4 text-left transition ${
+              className={`rounded-2xl border p-4 text-left transition-all duration-200 cursor-pointer ${
                 isSelected
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border bg-card hover:bg-muted/30"
+                  ? "border-blue-500 bg-blue-500/5 shadow-xs ring-1 ring-blue-500/20"
+                  : "border-border/70 bg-card hover:bg-muted/30 hover:border-border"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
